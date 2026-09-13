@@ -1,6 +1,6 @@
 # Keel 靶场：Actual Budget 真实 bug 清单
 
-> 用途：MVP 第一周手工循环的弹药（对应 `keel-project-plan.md` Phase 0 Spike 1）。
+> 用途：为项目计划中的真实 bug 修复提供候选案例，先从一个问题开始。
 > 靶场：[actualbudget/actual](https://github.com/actualbudget/actual) — 开源记账应用，React + TypeScript，纯 DOM 界面（适合 Playwright 断言），本地一条命令启动。
 > 每个 bug 均已确认：复现步骤清晰 + 官方修复 PR 已合入（= 自带标准答案）。
 > 日期：2026-07-14

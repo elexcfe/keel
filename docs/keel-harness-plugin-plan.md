@@ -2,7 +2,7 @@
 
 > 日期：2026-09-13
 > 状态：已确定采用插件形式；本文记录模块分工和开发顺序，具体接入方式在开发时验证。
-> 本文补充原项目计划。关于产品运行形式和模块划分，以本文为准；原计划中的目标用户、验证要求和不碰生产环境等原则继续保留。
+> 本文说明插件分工和接入要求；产品说明概括目标与边界，项目计划概括开发顺序和完成标准。关于产品运行形式和模块划分，以本文为准。
 
 ## 1. 我们决定怎么做
 
@@ -184,8 +184,8 @@ Keel 不另做一套编码 Agent。第一版可以先由人指出相关代码位
 
 ## 8. 参考资料
 
-- [Keel 产品构想](keel-product-brief.md)
-- [Keel 原项目计划](keel-project-plan.md)
+- [Keel 产品说明](keel-product-brief.md)
+- [Keel 项目计划](keel-project-plan.md)
 - [Actual Budget 靶场清单](keel-target-bugs.md)
 - [DeepSeek Harness 官方介绍](https://deepseek.com/harness/)
 - [DeepSeek Harness 架构文档](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/architecture.md)
