@@ -42,6 +42,7 @@ class ToolsTests(unittest.TestCase):
     def test_shell_exports_quote_paths(self):
         task = self.task('task')
         # 独立执行生成脚本，再交给 Bash，确认空格、引号、$() 均保持字面值。
+        (task / 'dependency_inventory.py').write_text(Path(t.dependencies.__file__).read_text())
         (task / 'prepare_tools.py').write_text(Path(t.__file__).read_text())
         result = subprocess.run(['bash', '-c',
             'tools_env="$(python3 ./prepare_tools.py)" || exit; eval "$tools_env"; printf "%s" "$MAKE_BUG_SHARED_TOOLS"'],
@@ -57,10 +58,14 @@ class ToolsTests(unittest.TestCase):
                 cli = root / 'node_modules/playwright/cli.js'
                 cli.parent.mkdir(parents=True, exist_ok=True)
                 cli.write_text('fixture')
+                (cli.parent / 'package.json').write_text(json.dumps({'name': 'playwright', 'version': '1.55.0'}))
         with patch.object(s.subprocess, 'check_output', return_value='v24.0.0\n'), patch.object(s.subprocess, 'run', side_effect=run):
             first = s.setup(self.shared, '1.55.0')
             second = s.setup(self.shared, '1.55.0')
         self.assertEqual(first, second)
+        entries = json.loads((self.shared / 'dependencies.json').read_text())['dependencies']
+        self.assertEqual(entries[0]['installer'], 'setup_tools.py')
+        self.assertEqual(entries[0]['version'], '1.55.0')
         self.assertEqual(sum(cmd[0] == 'npm' for cmd, _ in calls), 1)
         self.assertIn('playwright@1.55.0', calls[0][0])
         self.assertTrue(all('PLAYWRIGHT_BROWSERS_PATH' in kwargs['env'] for _, kwargs in calls))
@@ -68,6 +73,28 @@ class ToolsTests(unittest.TestCase):
         task = self.task('inventory')
         t.prepare(task)
         self.assertEqual(json.loads((task / 'result/logs/tools.json').read_text())['prepared_packages'], [str(first)])
+        self.assertEqual(json.loads((task / 'dependencies.json').read_text())['dependencies'][0]['name'], 'playwright')
+        # 后续浏览器准备失败，不能沿用旧的成功状态或把安装者误改成 Pi。
+        with patch.dict(os.environ, {'MAKE_BUG_INSTALLER': 'pi'}), patch.object(s.subprocess, 'check_output', return_value='v24.0.0'), patch.object(s.subprocess, 'run', side_effect=subprocess.CalledProcessError(1, 'node')):
+            with self.assertRaises(subprocess.CalledProcessError):
+                s.setup(self.shared, '1.55.0')
+        t.prepare(task)
+        entry = json.loads((task / 'dependencies.json').read_text())['dependencies'][0]
+        self.assertEqual(entry['status'], 'unverified')
+        self.assertEqual(entry['installer'], 'setup_tools.py')
+
+
+    def test_existing_shared_packages_keep_unknown_installer(self):
+        location = self.shared / 'node/playwright/old'
+        package = location / 'node_modules/playwright'
+        package.mkdir(parents=True)
+        (package / 'package.json').write_text('{"name":"playwright","version":"1.55.0"}')
+        (location / 'installed.json').write_text('{"status":"installed-not-runtime-validated"}')
+        task = self.task('old')
+        t.prepare(task)
+        entry = json.loads((task / 'dependencies.json').read_text())['dependencies'][0]
+        self.assertEqual(entry['installer'], 'unknown')
+        self.assertEqual(entry['status'], 'detected')
 
     def test_task_setup_uses_own_shared_config(self):
         task = self.task('configured task')

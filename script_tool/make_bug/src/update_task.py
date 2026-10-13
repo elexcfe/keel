@@ -5,8 +5,9 @@ from pathlib import Path
 import shutil
 import tempfile
 
+from dependency_inventory import update as initialize_inventory
 from make_bug import LAUNCHER, TOOL_ROOT
-from verify import LAUNCHER as VERIFY_LAUNCHER
+from run_scenario import LAUNCHER as SCENARIO_LAUNCHER
 
 
 def update(task):
@@ -14,26 +15,32 @@ def update(task):
     for name in ('repo', 'TASK.md', 'BUG.md', 'deps-config.json', 'tools-config.json'):
         if not (task / name).exists():
             raise ValueError(f'不是完整任务目录，缺少 {name}：{task}')
+    initialize_inventory(task)
     replacements = {
         name: (TOOL_ROOT / 'src' / name).read_bytes()
-        for name in ('prepare_deps.py', 'prepare_tools.py', 'setup_tools.py', 'verify.py', 'progress.py')
+        for name in ('command_timeout.mjs', 'process_tree.py', 'run_pi.py', 'run_isolation.py', 'session_stats.py', 'dependency_inventory.py', 'prepare_deps.py', 'prepare_tools.py', 'setup_tools.py', 'run_scenario.py', 'evidence.py', 'progress.py')
     }
-    (task / 'repro').mkdir(exist_ok=True)
-    replacements['verify.sh'] = VERIFY_LAUNCHER.encode()
-    replacements['VERIFICATION.md'] = (TOOL_ROOT / 'resource/prompts/verification.md').read_bytes()
+    (task / 'scenario').mkdir(exist_ok=True)
+    replacements['run_scenario.sh'] = SCENARIO_LAUNCHER.encode()
+    replacements['SCENARIO.md'] = (TOOL_ROOT / 'resource/prompts/scenario.md').read_bytes()
     replacements['run_pi.sh'] = LAUNCHER.encode()
     replacements['ENVIRONMENT.md'] = (TOOL_ROOT / 'resource/prompts/environment.md').read_bytes()
-    if all((task / name).is_file() and (task / name).read_bytes() == data
+    replacements['PREPARE.md'] = (TOOL_ROOT / 'resource/prompts/prepare.md').read_bytes()
+    replacements['MONITOR.md'] = (TOOL_ROOT / 'resource/prompts/monitor.md').read_bytes()
+    obsolete = ('verify.sh', 'verify.py', 'VERIFICATION.md')
+    if not any((task / name).exists() for name in obsolete) and all((task / name).is_file() and (task / name).read_bytes() == data
            for name, data in replacements.items()):
         return None
     backups = task / 'runner-backups'
     backups.mkdir(exist_ok=True)
     backup = Path(tempfile.mkdtemp(prefix='before-update-', dir=backups))
-    for name in replacements:
+    for name in (*replacements, *obsolete):
         if (task / name).exists():
             shutil.copy2(task / name, backup / name)
     for name, data in replacements.items():
         (task / name).write_bytes(data)
+    for name in obsolete:
+        (task / name).unlink(missing_ok=True)
     (task / 'run_pi.sh').chmod(0o755)
     return backup
 

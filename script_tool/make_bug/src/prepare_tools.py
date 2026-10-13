@@ -7,6 +7,8 @@ import platform
 import shlex
 import sys
 
+import dependency_inventory as dependencies
+
 
 def shared_environment(shared):
     shared = shared.expanduser().resolve()
@@ -39,6 +41,17 @@ def prepare(task):
                  'environment': {k: v for k, v in env.items() if k != 'PATH'},
                  'prepared_packages': [str(p.parent) for p in sorted(Path(config['shared']).expanduser().resolve().glob('node/*/*/installed.json'))],
                  'note': '目录存在不代表工具已安装；installed.json 只说明安装步骤完成，运行前仍需检查版本和启动情况。'}
+    dependencies.scan(task)
+    for marker in sorted(Path(env['MAKE_BUG_SHARED_TOOLS']).glob('node/*/*/installed.json')):
+        details = json.loads(marker.read_text())
+        entries = dependencies.tool_entries(marker.parent, env, 'unknown', 'existing; original installation unknown')
+        known = {(e['name'], e['path']): e for e in details.get('dependencies', [])}
+        for entry in entries:
+            entry['status'] = 'detected'
+            previous = known.get((entry['name'], entry['path']))
+            if previous and previous['version'] == entry['version']:
+                entry.update(previous)
+        dependencies.update(task, entries)
     logs = task / 'result/logs'
     logs.mkdir(parents=True, exist_ok=True)
     (logs / 'tools.json').write_text(json.dumps(inventory, ensure_ascii=False, indent=2) + '\n')

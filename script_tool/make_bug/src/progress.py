@@ -19,7 +19,7 @@ def run_progress(args, *, cwd=None, env=None, log=None, label='执行中', inter
     print(f'{label}：开始', file=stream, flush=True)
     process = subprocess.Popen([str(x) for x in args], cwd=cwd, env=env,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                               start_new_session=True)
+                               start_new_session=os.environ.get('MAKE_BUG_PROCESS_GROUP') != 'inherit')
     assert process.stdout is not None
     active_line = False
 
@@ -65,13 +65,19 @@ def run_progress(args, *, cwd=None, env=None, log=None, label='执行中', inter
             returncode = process.wait()
     except BaseException:
         try:
-            os.killpg(process.pid, signal.SIGTERM)
+            if os.environ.get('MAKE_BUG_PROCESS_GROUP') == 'inherit':
+                process.terminate()
+            else:
+                os.killpg(process.pid, signal.SIGTERM)
         except ProcessLookupError:
             pass
         try:
             process.wait(timeout=3)
         except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
+            if os.environ.get('MAKE_BUG_PROCESS_GROUP') == 'inherit':
+                process.kill()
+            else:
+                os.killpg(process.pid, signal.SIGKILL)
             process.wait()
         raise
     finally:

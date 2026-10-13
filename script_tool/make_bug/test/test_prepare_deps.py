@@ -56,6 +56,10 @@ class DependenciesTests(unittest.TestCase):
     def test_real_install_then_restore_without_install_and_isolation(self):
         first, second, third = self.task('first'), self.task('second'), self.task('third')
         self.assertEqual(self.prepare(first), 'installed')
+        entry = next(e for e in json.loads((first / 'dependencies.json').read_text())['dependencies'] if e['name'] == 'local-fixture')
+        self.assertEqual(entry['version'], '1.0.0')
+        self.assertEqual(entry['installer'], 'prepare_deps.py')
+        self.assertIn('npm ci', entry['install_method'])
         with patch.object(d, 'install_command', side_effect=AssertionError('不应再次安装')):
             self.assertEqual(self.prepare(second), 'restored')
         self.assertEqual(self.run_cmd(['node', '-p', 'require("local-fixture")'], second / 'repo'), '42')
@@ -66,7 +70,11 @@ class DependenciesTests(unittest.TestCase):
         metadata.write_text('changed in second task')
         self.assertEqual(self.prepare(third), 'restored')
         self.assertNotEqual((third / 'repo/node_modules/.package-lock.json').read_text(), metadata.read_text())
+        before = json.loads((third / 'dependencies.json').read_text())['dependencies']
         self.assertEqual(self.prepare(third), 'existing')
+        self.assertEqual(json.loads((third / 'dependencies.json').read_text())['dependencies'], before)
+        entry = next(e for e in before if e['name'] == 'local-fixture')
+        self.assertTrue(entry['install_method'].startswith('cache-copy:'))
 
     def test_source_lock_and_runtime_changes_invalidate_key(self):
         task = self.task('task')
@@ -132,6 +140,7 @@ class DependenciesTests(unittest.TestCase):
                 self.prepare(task)
         self.assertFalse(list(self.cache.rglob('complete.json')))
         self.assertEqual(json.loads((task / 'deps-state.json').read_text())['status'], 'failed')
+        self.assertEqual(json.loads((task / 'dependencies.json').read_text())['preparations']['project']['status'], 'failed')
 
     def test_failed_partial_install_can_retry_without_deleting_cache(self):
         task = self.task('retry')

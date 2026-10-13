@@ -2,6 +2,85 @@
 
 输入 GitHub Issue 链接，生成问题描述、Agent 要求、指定版本的代码，以及 pi 启动脚本。不改动现有仓库，不覆盖已生成任务。
 
+## 快速运行
+
+以下命令在 **Keel 仓库根目录** 执行。先按现有任务或新任务选择入口，不需要重新生成已有任务。
+
+| 你现在要做什么 | 使用哪个入口 |
+| --- | --- |
+| 重跑已经交付的场景、收集新证据 | 任务中的 `run_scenario.sh`，不调用 Pi、不安装依赖 |
+| 首次探索问题，或补齐/修改场景 | 任务中的 `run_pi.sh`，会准备依赖并调用已配置的 Pi |
+| 从 GitHub Issue 创建新任务 | `src/make_bug.py`，仅准备材料与代码，之后再启动 Pi |
+| 更新旧任务的工具 | `src/update_task.py`，更新工具不等于迁移完成场景 |
+
+### 直接运行当前 Actual 示例
+
+本机 Actual #8351 已迁移，可直接执行：
+
+```bash
+bash script_tool/make_bug/output/actualbudget-actual-8351/task/run_scenario.sh
+```
+
+需要重复观察时执行：
+
+```bash
+bash script_tool/make_bug/output/actualbudget-actual-8351/task/run_scenario.sh --repeat 3 --timeout 300
+```
+
+`--timeout` 是环境检查、场景执行各自的超时秒数；`--repeat` 为 1–10 次，执行阻塞或出错时停止后续轮次。该示例的代码、依赖与场景位于被忽略的 output/，**新克隆的仓库不会自带它们**；没有这个目录时，按下一节创建任务。
+
+### 从新 Issue 开始
+
+先满足下文“准备环境”中的 Python、Git、gh 与 Pi 要求。下面以 Actual #7738 为例：
+
+```bash
+# 1. 生成材料和代码；输出目录必须不存在
+python3 script_tool/make_bug/src/make_bug.py https://github.com/actualbudget/actual/issues/7738
+
+# 2. 启动 Pi，探索问题并按 SCENARIO.md 交付场景
+bash script_tool/make_bug/output/actualbudget-actual-7738/task/run_pi.sh
+```
+
+第 1 步遇到版本歧义时，按下文说明指定 `--ref` 或 `--fix-pr`。生成器只创建 scenario/ 目录，**不会自动写好场景**。第 2 步需要 Pi 完成 manifest.json、env.sh、check.sh、run.sh 和相关采集脚本；若 Pi 报告缺材料或环境阻塞，先处理报告中的原因。
+
+场景已交付后，无需再启动 Pi 即可重跑：
+
+```bash
+# 3. 独立执行已有场景
+bash script_tool/make_bug/output/actualbudget-actual-7738/task/run_scenario.sh
+```
+
+其他 Issue 使用生成器打印的实际 task 路径；指定 `--output` 后也按该路径运行。脚本会自行切换到任务目录，从其他目录运行时请使用绝对路径。
+
+### 已有旧任务怎样迁移
+
+先更新运行工具，将 `/absolute/path/to/task` 替换成已有任务目录：
+
+```bash
+python3 script_tool/make_bug/src/update_task.py /absolute/path/to/task
+```
+
+更新会备份并移除旧 verify 入口，**不提供兼容层，也不会自动转换旧 repro/**。随后在该任务启动 `run_pi.sh`，让 Pi 按任务内的 SCENARIO.md 将已有操作、环境检查、测试及证据采集明确迁移到 scenario/，保留历史结果和已有业务改动。旧脚本的 outcome.json、target_failed 与退出码规则不能直接照搬，必须按 [场景交付要求](resource/prompts/scenario.md) 分开执行状态、观察和检查结果。新场景交付后再运行 `run_scenario.sh`。
+
+### 运行后看哪里
+
+终端最后打印本轮 `REPORT.md` 的完整路径。先打开它：里面按操作步骤列出观察、自动检查、图片、视频及其他证据链接，并提供代码快照和改动文件。结果目录为 `task/result/runs/run-时间-随机值/`，每轮独立保存，不覆盖上一次。
+
+需要交给 AI 分析时，提供该轮 REPORT.md、record.json 及引用的原始材料；不要只提供一个退出码。代码改动在 `code/working-tree.diff`，新增文件完整内容在 `code/source.tar.gz`，两者的含义见下文“独立运行场景”。视频由具体场景采集，并非每次运行器启动都会自动生成；缺少视频时查看报告中的限制和证据警告。
+
+### 运行失败怎样处理
+
+| 现象 | 从哪里排查、怎样继续 |
+| --- | --- |
+| 找不到 run_scenario.sh | 确认任务路径；旧任务先更新工具，新任务先生成材料 |
+| 缺少 scenario/manifest.json 或场景文件 | 场景尚未交付/迁移完成，启动该任务的 Pi 按 SCENARIO.md 补齐 |
+| blocked，环境检查未通过 | 查看本轮 logs/check.log；按 ENVIRONMENT.md 恢复环境后重跑。Node 依赖可单独执行任务中的 `python3 prepare_deps.py`，浏览器和系统库还需按日志处理 |
+| error，场景执行错误或超时 | 查看本轮 logs/run.log 和原始框架报告；定位服务、操作或脚本问题后重跑，不要仅为通过而放宽断言 |
+| error，缺少有效 observations.json | 场景未按交付约定输出观察，修正采集/结果解析脚本；已有材料仍在本轮目录 |
+| completed，但检查 failed 或证据有警告 | 场景执行完成，不代表 Bug 消失；查看具体异常、缺失证据或文件变化，由人或 AI 评审 |
+
+没有 `--baseline` 或 `--prepare`。重跑只记录任务中**当前代码**的行为，不会自动修复或恢复旧版本；退出状态和完整产物说明见下文“独立运行场景”。
+
 ## 目录与上库范围
 
 ```text
@@ -65,7 +144,7 @@ python3 script_tool/make_bug/src/make_bug.py https://github.com/actualbudget/act
 
 ## 下载与安装进度
 
-首次下载仓库和增量 fetch 会实时显示 Git 的接收对象、字节数、速度及各阶段百分比（以 Git 实际输出为准，阶段 100% 不代表整个流程完成）。项目依赖安装实时显示包管理器的解析、下载、链接或构建输出，同时保留日志；run_pi.sh 不再等安装结束才显示内容，verify.sh --prepare 也会实时显示。
+首次下载仓库和增量 fetch 会实时显示 Git 的接收对象、字节数、速度及各阶段百分比（以 Git 实际输出为准，阶段 100% 不代表整个流程完成）。项目依赖安装实时显示包管理器的解析、下载、链接或构建输出，同时保留日志；run_pi.sh 不再等安装结束才显示内容。
 
 工具没有输出可靠总量时，不显示虚构的整体百分比：终端显示活动进度条、已用时间和等待新输出的时间。输出直接连接终端时约每秒刷新，重定向或管道环境（包括 run_pi.sh 的 tee 日志转发）每 5 秒输出一行状态，便于保存和查看。活动条表示进程尚未退出，不保证下载正在推进；长时间无新输出可以结合日志排查网络、构建或输入等待。缓存命中会直接说明复用，不制造下载进度。
 
@@ -88,7 +167,7 @@ python3 script_tool/make_bug/src/make_bug.py https://github.com/actualbudget/act
 
 各任务获得普通文件副本和指向本任务的相对链接，不使用共享可写目录或硬链接。只在安装成功、源码未变化且产物可迁移时发布完整缓存；失败安装不进入缓存。同一缓存键的准备使用文件锁，适用于 Linux、WSL 和 macOS。
 
-日志和复用状态在 `task/result/logs/dependencies.log`（发生安装时）与 `dependencies.json`，状态文件为 `task/deps-state.json`。已有成功且匹配的依赖直接复用；同一失败安装可自动续装。未匹配或旧版未记录的依赖默认保留，确认是本次安装产物后可用 `python3 prepare_deps.py --retry` 重跑包管理器（npm ci 会重建 node_modules，Yarn 会继续处理链接和构建），不需要重新生成项目。要绕过自动准备可执行：
+逐项依赖清单在 `task/dependencies.json`。安装日志和批次状态分别在 `task/result/logs/dependencies.log` 与 `task/result/logs/dependencies.json`，缓存状态在 `task/deps-state.json`；这些状态文件不代替依赖清单。已有成功且匹配的依赖直接复用；同一失败安装可自动续装。未匹配或旧版未记录的依赖默认保留，确认是本次安装产物后可用 `python3 prepare_deps.py --retry` 重跑包管理器（npm ci 会重建 node_modules，Yarn 会继续处理链接和构建），不需要重新生成项目。要绕过自动准备可执行：
 
 ```bash
 MAKE_BUG_SKIP_DEPS=1 bash /path/to/task/run_pi.sh
@@ -108,7 +187,7 @@ MAKE_BUG_SKIP_DEPS=1 bash /path/to/task/run_pi.sh
 python3 script_tool/make_bug/src/update_task.py /absolute/path/to/task
 ```
 
-升级会备份旧运行脚本到任务的 `runner-backups/`，更新启动器、依赖与工具准备脚本（含 setup_tools.py）、验证入口、ENVIRONMENT.md 和 VERIFICATION.md；保留 TASK.md、BUG.md、项目代码、依赖、任务配置与缓存。之后仍运行原来的 `bash run_pi.sh`。只是升级脚本不会自动执行安装或启动 pi。
+升级会备份旧运行脚本到任务的 `runner-backups/`，更新启动器、依赖与工具准备脚本（含 setup_tools.py）、场景入口、ENVIRONMENT.md 和 SCENARIO.md；保留 TASK.md、BUG.md、项目代码、依赖、任务配置与缓存。旧 verify.sh、verify.py、VERIFICATION.md 备份后移除，不提供兼容入口。旧 repro/ 和 result/ 历史证据保留，但需要明确迁移为 scenario/ 新格式，更新器不会猜测转换测试。启动 Pi 仍用 `bash run_pi.sh`；只是升级脚本不会执行安装或启动 Pi。
 
 ## 常用工具与一次性工具
 
@@ -138,9 +217,68 @@ task/tools/
 └── tmp/                          # 临时数据、浏览器用户数据
 ```
 
-启动器先运行 `prepare_tools.py`，创建目录并输出工具清单 `result/logs/tools.json`，然后准备项目依赖、启动 pi。它设置 `MAKE_BUG_SHARED_TOOLS`、`MAKE_BUG_TASK_TOOLS`、`PLAYWRIGHT_BROWSERS_PATH`、`PUPPETEER_CACHE_DIR`、`npm_config_cache`、`PIP_CACHE_DIR`，共享工具和项目自己的浏览器安装器都使用这些路径。Playwright 缓存关闭自动旧版本回收，避免任务之间清掉彼此需要的 revision；长期不用的版本由准备者检查后清理。目录存在不等于工具已安装或能启动。
+任务根目录的 `dependencies.json` 是给人和 Pi 读取的统一清单。Pi 启动提示要求先用 `python3 dependency_inventory.py show` 查看分组，报告引用此文件，不重复罗列依赖。
 
-pi 根据 Issue、项目依赖与实际运行错误自行确定所需工具、精确版本和缓存价值，用户无需预先提供清单。通用工具和高成本下载优先跨 Issue 复用；任务专用脚本、不能安全迁移的安装产物保持独立，但仍可共享下载缓存。具体约定见 [环境要求](resource/prompts/environment.md)。决策记录写入任务的 `result/logs/tool-decisions.json`，这是 pi 执行时的交付要求，不是启动脚本自动生成的结果。
+清单中的每条记录用 `category` 表示用途，根部 `summary` 给出各类数量。`show` 将记录按用途分组，默认不展开项目包；完整明细仍只保存在这一份 JSON 中。
+
+| 类别 | 内容 |
+| --- | --- |
+| `project` | 项目构建、启动所需的包、Node 和包管理器 |
+| `services` | 正常运行必需的数据库、Redis 或后端服务 |
+| `verification` | Playwright、浏览器、测试工具，以及仅为验证准备的服务 |
+| `unclassified` | 用途尚不明确，需 Pi 查看后分类的依赖 |
+
+数据库按用途分类，不能一律归到验证依赖。自动盘点将普通项目包归为 project，明确的 Playwright、Jest、Vitest 等测试工具归为 verification；共享浏览器安装器准备的工具也归为 verification。不根据 devDependencies 推断用途，也不自动发现或验证数据库服务。有限的名称规则不能识别所有用途，Pi 应检查待分类项及当前场景需要的工具，并可明确调整。内部 `group` 只用于盘点来源及失效处理，不代表用途。
+
+```bash
+# 默认看验证依赖、运行服务、待分类项；项目包只显示摘要
+python3 dependency_inventory.py show
+# 需要时查看某类明细；all 展示所有类别
+python3 dependency_inventory.py show --category project
+# 更正已有记录的用途，不修改版本和安装来源
+python3 dependency_inventory.py classify \
+  --name playwright --path "$PWD/repo/node_modules/playwright" \
+  --category verification
+```
+
+手动 `record` 必须提供 `--category`；明确指定的用途在重新盘点、安装或更新版本后保留。服务可以用实际配置文件或数据目录作为 path，安装方式记实际部署命令，不把凭据写入清单；空的 services 只表示没有登记，不能证明项目无需服务。
+
+每项至少包含以下字段（示例）：
+
+```json
+{
+  "category": "verification",
+  "name": "playwright",
+  "version": "1.55.0",
+  "install_method": "npm install --save-exact playwright@1.55.0",
+  "installer": "pi",
+  "path": "/path/to/task/tools/node/playwright/node_modules/playwright",
+  "status": "installed"
+}
+```
+
+`installer` 记录执行安装或缓存复制的主体：`prepare_deps.py`、`setup_tools.py`、`pi`；历史来源无法确认时为 `unknown`。Pi 启动后的脚本通过 `MAKE_BUG_INSTALLER=pi` 记录调用者。该字段是过程记录，不是身份认证。`installed` 只表示安装步骤完成，`detected` 表示仅发现文件，`unverified` 表示需重新检查，`failed` 表示手工登记的失败。实际版本无法读取时为 null；浏览器另保留安装 revision。安装完成不保证运行正常。
+
+在任务目录运行：
+
+```bash
+# 只盘点已有 Node 包，不重新安装；保留已知安装者
+python3 dependency_inventory.py scan
+
+# Pi 自行安装其他工具后，按实际结果登记（此命令本身不会安装）
+python3 dependency_inventory.py record --category verification \
+  --name pytest --version 8.4.2 \
+  --method 'python -m pip install pytest==8.4.2' --installer pi \
+  --path "$PWD/tools/python/tests/lib/python3.12/site-packages/pytest"
+```
+
+`prepare_deps.py` 自动记录 Node 实际安装包（含 workspace、嵌套包、pnpm 和可读取的 Yarn PnP）、Node 和包管理器版本。`setup_tools.py` 自动记录 Playwright 及其 Chromium；直接运行源码预装时先存到共享目录的 `dependencies.json`，任务启动时导入到自己的清单。安装失败不会标为就绪；盘点失败可查看清单的 `preparations.project.warnings`。其他语言、系统库和 Pi 自行安装的工具由 Pi 逐项登记，不声称自动捕获所有 shell 安装行为。清单更新加锁并原子写入，同名不同安装路径分别保留。
+
+新任务自带清单和记录工具；旧任务先按上文运行 `update_task.py`，再执行盘点命令即可。升级保留已有清单和自定义 TASK.md；ENVIRONMENT.md 会更新为新的统一记录要求。清单在已忽略的任务输出目录内，不应提交到 Keel 源码仓库。
+
+启动器先运行 `prepare_tools.py`，创建目录，将共享工具登记到 `dependencies.json`，另将目录和环境变量写入 `result/logs/tools.json`，然后准备项目依赖、启动 pi。它设置 `MAKE_BUG_SHARED_TOOLS`、`MAKE_BUG_TASK_TOOLS`、`PLAYWRIGHT_BROWSERS_PATH`、`PUPPETEER_CACHE_DIR`、`npm_config_cache`、`PIP_CACHE_DIR`，共享工具和项目自己的浏览器安装器都使用这些路径。Playwright 缓存关闭自动旧版本回收，避免任务之间清掉彼此需要的 revision；长期不用的版本由准备者检查后清理。目录存在不等于工具已安装或能启动。
+
+pi 根据 Issue、项目依赖与实际运行错误自行确定所需工具、精确版本和缓存价值，用户无需预先提供清单。通用工具和高成本下载优先跨 Issue 复用；任务专用脚本、不能安全迁移的安装产物保持独立，但仍可共享下载缓存。具体约定见 [环境要求](resource/prompts/environment.md)。脚本安装的依赖自动登记到 `dependencies.json`；Pi 自行补装的依赖也必须更新同一文件。
 
 每个新任务都包含 `setup_tools.py`。pi 可在任务目录运行 `python3 setup_tools.py --playwright-version <精确版本>`；默认读取任务的 tools-config.json，不要求用户选择版本或执行预装。此入口只负责 Playwright + Chromium，其他工具由 pi 根据上述约定安装、验证和记录，并没有通用工具自动安装器。
 
@@ -172,10 +310,13 @@ actualbudget-actual-7738/
     ├── TASK.md          # 复现要求、证据要求、禁止网络搜索
     ├── ENVIRONMENT.md   # 环境检查与自动恢复要求
     ├── run_pi.sh        # 准备依赖后启动 pi
-    ├── verify.sh        # 修复后独立验证，不调用 pi
-    ├── verify.py        # 验证执行器
-    ├── VERIFICATION.md  # 复现包交付接口
-    ├── repro/           # pi 生成固定测试入口、环境配置、基线记录
+    ├── run_scenario.sh # 独立运行场景，不调用 Pi、不安装依赖
+    ├── run_scenario.py # 执行器
+    ├── evidence.py     # 快照、证据索引与可读报告
+    ├── SCENARIO.md     # 场景与证据交付要求
+    ├── scenario/       # 场景清单、操作脚本及观察采集
+    ├── dependencies.json # 统一依赖清单：名称、实际版本、安装方式、安装者、路径、状态
+    ├── dependency_inventory.py # 盘点已有 Node 依赖或登记 Pi 补装工具
     ├── prepare_tools.py # 工具目录与浏览器缓存环境
     ├── setup_tools.py   # pi 可直接调用的共享 Playwright 安装入口
     ├── tools-config.json # 常用工具根目录
@@ -186,7 +327,7 @@ actualbudget-actual-7738/
     ├── repo/            # 问题代码；Git 只有一个本地初始快照提交
     └── result/          # 最终交付，可整体复制
         ├── REPRO.md     # pi 执行后生成的复现报告
-        ├── runs/        # 每次基线/验证的独立日志、截图和 summary.json
+        ├── runs/        # 每轮 record.json、REPORT.md、代码快照与原始证据
         ├── images/      # 探索阶段截图，按需生成
         └── logs/        # 执行日志，按需生成
 ```
@@ -212,9 +353,9 @@ PI_BIN=/absolute/path/to/pi bash /tmp/actual-7738/task/run_pi.sh
 
 生成命令加 `--run` 会立即启动 pi，先运行依赖缓存准备，再由 pi 复现；依赖预备失败时把退出码和日志交给 pi；pi 先处理环境，再复现，确实无法继续才输出阻塞报告。脚本原样返回 pi 的退出码。参数透传供准备者选择模型和运行模式；不要用额外参数重新启用网络搜索工具或恢复包含答案的旧会话。
 
-启动脚本禁用自动扩展、技能、提示模板、上下文文件发现及内置 MCP，只启用文件和 bash 等基本工具，避免额外搜索入口；默认启动新会话并保留 pi 自身的会话保存行为，不传入 `--no-session`、`--continue` 或 `--resume`，并把 TASK.md 加入系统提示。不使用 `--offline`，允许正常网络连接。
+启动脚本禁用自动扩展、技能、提示模板、上下文文件发现及内置 MCP，只启用文件和 bash 等基本工具，避免额外搜索入口；默认启动新会话，监测入口显式指定每轮独立的会话目录，不传入 `--no-session`、`--continue` 或 `--resume`，并把任务规则加入系统提示。不使用 `--offline`，允许正常网络连接。
 
-开发阶段保留 pi 会话，便于回看对话和工具调用、分析失败原因。启动器不覆盖 pi 的会话存储目录，由实际安装版本与用户配置决定；`result/logs/` 仍是环境和测试日志，不是 pi 会话目录。恢复保存从下次启动生效，之前用 `--no-session` 运行的会话不会因此补回。已有任务使用上文 `update_task.py` 升级启动器即可。
+所有运行默认监测并保存 Pi 会话，位置为任务父目录的 `pi-runs/` 或 `--runs-dir` 指定目录；`result/logs/` 仍是任务日志。single/split、隔离运行、查看统计及限制见下文“Pi 运行监测”。已有任务运行 `update_task.py` 升级后生效，过去未保存的会话不能补回。
 
 网络约定是：**允许联网准备和运行环境，禁止网络搜索和查阅修复答案**。pi 可以下载依赖、浏览器、构建工具和 BUG.md 直接引用的复现附件，连接必要的测试服务；依赖按锁文件或指定版本获取。不得通过搜索引擎、curl、浏览器等变相搜索，不查修复 PR、Issue 评论、补丁或其他版本源码，也不拉取或切换目标仓库版本。这是工具配置加提示约束，不是网络沙箱，无法从技术上阻止 bash 访问搜索网站。
 
@@ -224,7 +365,7 @@ PI_BIN=/absolute/path/to/pi bash /tmp/actual-7738/task/run_pi.sh
 
 公共提示词在 [resource/prompts/reproduce.md](resource/prompts/reproduce.md)，可以直接编辑，不需要修改 Python。生成器每次读取该文件，原样复制文字并追加准确提交号，写入 `task/TASK.md`。模板不使用变量替换，花括号、命令示例等可正常书写。模板缺失或为空时，在联网前报错，不悄悄使用旧版本。
 
-启动时通过 `--append-system-prompt` 把任务自己的 `TASK.md` 加入系统提示，`BUG.md` 作为文件附件传入；同时传入 ENVIRONMENT.md，初始指令要求先核查预备状态、必要时恢复环境，然后按 TASK.md 复现。
+启动时通过 `--append-system-prompt` 把任务自己的 `TASK.md` 加入系统提示，`BUG.md` 作为文件附件传入；同时传入 SCENARIO.md、ENVIRONMENT.md 和 MONITOR.md，初始指令要求先核查预备状态、必要时恢复环境，然后按 TASK.md 复现。
 
 提示词要求先明确判定条件，再检查环境、执行复现、保留最小测试并写报告。测试断言正常行为，避免把任意报错当作目标 Bug；允许联网安装依赖及必要的本地构建和配置，要求说明所有调整。成本允许时独立运行三次并重置测试数据，不能稳定复现时如实记录偶发性。缺少的材料确实阻止执行或判断时才报告阻塞，不因为某个非必要附件缺失而停下。
 
@@ -242,27 +383,107 @@ python3 -m unittest discover -s script_tool/make_bug/test -p 'test_*.py' -v
 
 测试使用临时 Git 仓库和模拟 GitHub/pi；依赖测试使用真实 Node/npm 和本地 fixture，强制 offline，不访问注册表或调用付费模型。缺少 Node/npm 时依赖测试会标为跳过。
 
-## 修复后直接验证
+## 独立运行场景
 
-首次 pi 探索必须按 [验证交付要求](resource/prompts/verification.md) 生成 `repro/manifest.json`、`env.sh`、`check.sh`、`run.sh` 及测试。任务生成时只提供验证器，不会预造测试或声称已复现。已有任务升级会保留自定义 TASK.md 和 repro；缺少复现包时 verify 明确阻塞，需要先由 pi 补齐。
-
-从 task 目录执行：
+按 [场景交付要求](resource/prompts/scenario.md) 生成 scenario/manifest.json、env.sh、check.sh、run.sh 及观察采集脚本。运行入口不需要失败基线；有无异常都能记录。旧 verify 流程已经删除，没有 --baseline、--prepare 或兼容转换。
 
 ```bash
-# pi 在问题代码上完成交付时执行，三个独立数据起点
-bash verify.sh --baseline --repeat 3
-
-# 修改 repo 中业务代码后，沿用同一套断言
-bash verify.sh
-
-# 只有依赖输入或环境变更且需要安装时才显式执行
-bash verify.sh --prepare
+bash /path/to/task/run_scenario.sh
+bash /path/to/task/run_scenario.sh --repeat 3 --timeout 300
 ```
 
-默认不调用 pi、不安装依赖；先检查工具与环境，然后执行固化测试。`--prepare` 会运行依赖安装（npm ci 会重建 node_modules），不自动安装系统库或浏览器；这些缺失时 check.sh 应给出明确准备方法。`--timeout` 默认每个检查/测试步骤 300 秒；`--repeat` 支持 1–10 次。
+环境需要准备时单独运行任务的 prepare_deps.py 或按 ENVIRONMENT.md 恢复，再执行场景。check.sh 负责环境检查；run.sh 负责操作、采集和解析自动检查结果。正常完成时 run.sh 返回 0，即使断言失败；工具错误必须返回非零，不可将任何测试失败都吞掉。详细 JSON 格式以场景交付要求为准。
 
-首次目标断言失败写入 repro/baseline.json，校验测试和配置文件；修复后若断言或测试辅助文件被修改则停止比较，业务文件不在封存列表中。清单必须完整列出自定义辅助文件，校验不是防篡改沙箱。需要改测试时先保留旧复现包与证据，在明确记录原因后重新建立基线。升级工具不会自动替换 pi 已生成的测试。
+每轮在 result/runs/run-* 交付：
 
-每次独立写入 result/runs/baseline-时间-随机值 或 verify-时间-随机值，包含 summary.json、outcome.json、logs、images；不覆盖旧报告。记录当前 HEAD、Git 状态、业务差异、代码内容摘要、测试校验值、覆盖范围和结果。未跟踪文件记录在内容摘要中，不自动打包其完整源码；需要迁移复现时保留 task/repo、repro 和必要工具，result 只是证据包。
+- REPORT.md：操作条件、观察事实、自动检查、原始证据链接、代码状态和限制。
+- record.json：相同信息的结构化记录，review 初始为 pending；执行器不代替人或 AI 判断。
+- observations.json：场景采集的原始观察、检查与证据引用。
+- logs/、images/、videos/：原始运行材料，每个文件记录内容摘要；缺失引用或空文件显示警告。
+- scenario.tar.gz：本轮声明的场景文件快照，版本由文件内容和模式摘要标识。
+- code/source.tar.gz、index.json：Git 跟踪文件及未忽略的新增文件的实际内容、权限、符号链接和缺失记录。归档不是 Git 仓库，不包含被忽略的依赖或外部数据；恢复到空目录，不覆盖当前项目。外部符号链接只记录链接本身。
+- code/working-tree.diff：辅助查看本轮相对 HEAD 的已跟踪改动；它不是两轮之间的 diff。新增文件完整内容在源码归档中。
 
-退出码：0 为已覆盖场景通过，1 为结构化结果确认的目标断言失败，2 为环境/执行阻塞。基线未触发目标失败也视为无法建立基线。普通测试退出 1、pi 正常退出或旧报告存在都不能证明复现成功。批量执行遇到阻塞立即停止，避免机械重试；返回最严重状态（阻塞优先）；逐次结果见 summary.json，出现混合结果不能称稳定。服务应使用独立端口并拒绝复用旧进程，测试结束清理本次进程组。同任务使用文件锁避免并发验证。
+执行状态为 completed / blocked / error / interrupted，分别返回 0 / 2 / 1 / 130。**退出 0 只表示执行并交付了有效结构的记录，不代表 Bug 不存在，也不保证视频或检查内容正确。** 检查结果 passed / failed / inconclusive 单独保存；证据缺失和执行期间文件变化单独列为警告。重复执行遇到非 completed 停止，不对多轮自动宣称稳定。
+
+修改场景后可以直接重跑，新轮次保留新版本，旧记录不覆盖。人或 AI 在 result/REPRO.md 写评审，引用运行 ID、视频/事件时间点和文件；原始记录不随评审改写。参考轮次由评审选择。本阶段没有自动修复、两轮对照生成器或 AI 视频判断器。
+
+## Pi 运行监测（默认开启）
+
+`run_pi.sh` 现在统一进入 `run_pi.py`。single 和 split 都自动保存记录，不再只依靠 Pi 默认会话目录。当前执行器支持 Linux/WSL；其他平台的子进程回收未实现。它不判断 Bug 是否成立。
+
+```bash
+# 日常单会话；有交互终端时保留 Pi 交互界面
+bash /path/to/task/run_pi.sh
+
+# 非交互单会话，显式选择同一提供商/模型
+bash /path/to/task/run_pi.sh --timeout 3600 \
+  -- --print --provider '<provider>' --model '<model>'
+
+# 两个新会话：只准备环境 → 按文件交接后复现
+bash /path/to/task/run_pi.sh --workflow split \
+  --timeout 3600 --prepare-timeout 900 \
+  -- --provider '<provider>' --model '<model>'
+
+# 从干净模板新建隔离副本；目标目录必须不存在
+bash /path/to/template/task/run_pi.sh \
+  --workflow single --isolate /tmp/keel-experiment/pair-01-A \
+  --runs-dir /tmp/keel-experiment/records --pair-id pair-01 \
+  -- --print --provider '<provider>' --model '<model>'
+
+# B 仍从同一干净模板开始，不能以 A 的运行目录作输入
+bash /path/to/template/task/run_pi.sh \
+  --workflow split --isolate /tmp/keel-experiment/pair-01-B \
+  --runs-dir /tmp/keel-experiment/records --pair-id pair-01 \
+  -- --provider '<provider>' --model '<model>'
+
+# 重算某轮统计；不会启动 Pi
+python3 script_tool/make_bug/src/session_stats.py analyze /path/to/pi-runs/run-id
+
+# 汇总目录下的历史运行；失败和未验收尝试也保留
+python3 script_tool/make_bug/src/session_stats.py summarize /path/to/pi-runs
+```
+
+默认记录在任务父目录的 `pi-runs/<时间-随机ID>/`；隔离运行默认放在隔离目标的父目录 `pi-runs/`。可用 `--runs-dir` 指定，必须位于任务及隔离副本之外。同一任务目录不允许两个 Pi 同时写入，需要并行时创建不同隔离副本。每次新建记录目录，single 一个独立 session-dir，split 两个，不能传 `--no-session`、恢复旧会话、覆盖 session-dir/系统提示或输出模式的参数。模型、提供商、推理档位等 Pi 参数放在 `--` 后。API 密钥走 Pi 的配置，不放命令行。
+
+每轮记录包括：
+
+| 文件/目录 | 用途 |
+| --- | --- |
+| `run.json` | 运行方式、原/实际任务路径、配对标识、Pi 版本探测、预算、阶段命令/状态、总耗时、退出原因、监测完整性 |
+| `current.json`、`live-metrics.json` | 当前阶段和约每两秒刷新的已采集用量；不是可靠的模型调用中途计费器 |
+| `sessions/` | Pi 的原始 JSONL 会话，是统计用量的唯一来源 |
+| `events/` | 阶段过程日志及起止记录；非交互 Pi 输出为 JSON 事件流，交互模式直接使用终端，不额外录制屏幕 |
+| `prompts/` | 每阶段实际提示文件、BUG、启动指令及摘要 |
+| `environment.json` | 工具路径和端口等白名单环境变量，不导出全部环境 |
+| `snapshots/` | 初始、交接、结束的源码归档/摘要和依赖状态；不包含依赖二进制或数据库 |
+| `handoff/` | B1 交接文件副本及结构检查结果 |
+| `metrics.json`、`tools.json` | 总计及分阶段用量、估算费用、调用数、压缩数、工具调用与结果关联 |
+| `review.json`、`REPORT.md` | 初始为待验收；运行完成不自动变成复现成功 |
+
+所有模型发起的 bash 工具调用由显式加载的 `command_timeout.mjs` 约束：未指定时默认 120 秒，显式申请最多 600 秒；超时由 Pi 终止命令并向模型返回错误，后续可继续诊断。不能用 `--extension/-e` 注入其他扩展覆盖约束。每轮保存扩展副本及摘要。这是运行保护，不是阻止 Agent 绕过的安全沙箱，D 状态等不可中断内核等待仍不能保证立即结束。
+
+默认总时限 1 小时（3600 秒），split 环境阶段最多 15 分钟，提前结束的余额可用于复现。隔离复制、快照、前置脚本和交接计入总耗时；子进程执行到限后终止并保存记录；文件复制、快照和最终归档没有硬中断，可能使实际总耗时超过时限，超出会如实计入，不会再给下一阶段新预算。`--cost-limit <金额>` 按 Pi 已记录的估算费用（通常 USD）设置软上限，合计两个会话；记录有延迟或缺失时不能保证费用硬上限，应同时设置提供商限额。无论失败、超时还是中断都保留已经发生的费用。
+
+执行器结束每阶段时清理它启动的子进程。Linux/WSL 使用子进程回收机制处理另开进程组的 shell/服务；不按服务名或端口杀其他任务。`MAKE_BUG_PORT` 是建议端口，不是已预留端口，Agent 必须确认并记录实际值。通过外部服务管理器、容器守护进程或远程服务创建的资源仍须场景自行清理，不声称能够自动接管。
+
+隔离模式仅复制干净仓库的已跟踪代码以及任务规则/脚本，重写项目缓存和共享工具路径；不带入历史报告、场景、会话或已安装依赖。独立的下载缓存、浏览器目录、临时目录及 XDG 缓存避免正常安装互相污染。可加 `--cache-seed /path/to/downloads`，两组各自复制同一份下载缓存种子（如准备脚本缓存目录下的 downloads），不是共享可写目录。为避免路径损坏，绝对/外部符号链接和 Git 共享对象库被拒绝。
+
+当前隔离入口实现的是从源码重装的条件，**不是“已安装环境就绪”的自动克隆**。要跑设计中的热环境组，应由实验准备者在两份独立副本按同一脚本准备相同环境，核查摘要后在各副本内用 single/split 启动；不要直接复制带绝对路径的 node_modules 或虚拟环境。任务源码内、用户配置或工具自行指定的外部位置仍可被访问；目录隔离不是网络/文件系统沙箱。严格防止跨组读取需要容器或其他沙箱，尚未实现。
+
+B1 接收 PREPARE.md、ENVIRONMENT.md 和 MONITOR.md；B2 接收 TASK.md、SCENARIO.md、ENVIRONMENT.md 和 MONITOR.md，并读取环境交接。B1 退出后停止服务，B2 自行重启；依赖保留。结构检查不执行未审核的交接命令，也不把 ready 当成功。B1 超时、失败或交接缺失时，只要总预算仍有余额且未达到费用上限，B2 仍可尝试补齐；这些情况会保留在阶段记录中。
+
+统计按 session id + entry id 去重，事件流不另计费，包含会话中的压缩、分支摘要和独立 usage。缺失/截断/不支持的记录会报告警告；不完整阶段使总费用未知，同时保留 `known_totals` 作为已知下限。当前解析器按 Pi 会话 v3 的字段实现，已用本机 Pi 1.0.4 / deepseek-v4-pro 的最小真实调用验证：回复 OK，输入 45、输出 1、总计 46 token，费用估算 0.00006336 美元，统计与原始 usage 一致。这只验证了最小调用和会话解析；完整复现、交互终端及中断保存仍需真实验收，也不代表所有 Pi 版本均已验证。同一 pair-id 恰有 single/split 各一次时，汇总保留配对成本差及验收状态；重复或缺少一组时标记不完整。工具调用的 env/reproduce 等语义分类默认 unknown，不凭命令关键词推断重复安装或环境返工。
+
+独立验收后，可填写 `review.json` 的 `outcome`（reproduced / not_reproduced / blocked）、`reviewer` 和非空 `evidence` 引用；汇总只有在 reproduced 且具备判断者、证据引用时才计为已验收复现，程序不替代证据审查。未验收、失败和费用未知均单独保留，不自动宣布 A/B 胜者。
+
+原始会话和日志可能含敏感信息，不会自动脱敏；默认运行目录权限为仅当前用户可进入。分享前另做脱敏副本，原始结果不提交 Git。本工具的 `output/`、`experiments/`、`pi-runs/` 均已忽略；自定义的其他输出位置需要自行配置忽略规则。
+
+
+命令超时策略可离线测试（不调用模型）。设置安装目录还会使用真实 Pi 的扩展加载器和 bash 工具验证超时、子进程退出及下一条命令恢复：
+
+```bash
+node script_tool/make_bug/test/test_command_timeout.mjs
+PI_PACKAGE_PATH=/home/elexcfe/.local/lib/node-v24/lib/node_modules/@earendil-works/pi-coding-agent \
+  node script_tool/make_bug/test/test_command_timeout.mjs
+```

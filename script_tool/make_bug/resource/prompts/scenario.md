@@ -1,0 +1,46 @@
+# 场景运行与证据交付
+
+此约定替代旧 TASK 中关于 verify、失败基线和固定复现包的要求。只建立场景，不修复业务代码。交付可供人或 AI 核查的操作过程、异常瞬间和代码状态；运行结束不等于已复现或已修好。
+
+## 场景定义
+
+在 task/scenario/ 创建以下文件：
+
+- manifest.json：schema 为 1；title 为场景标题；data 描述测试数据来源、恢复方式及随机性；steps 是操作步骤列表；coverage 列出实际观察范围；files 列出测试、配置、数据样本及辅助文件的任务内相对路径。env.sh、check.sh、run.sh 和 manifest.json 自动纳入版本摘要与归档。不要把业务实现放进 files。
+- env.sh：仅导出所需环境变量，不安装、不启动服务、不改代码。路径从 MAKE_BUG_TASK 推导。
+- check.sh：检查依赖、浏览器或其他运行条件。返回 0 表示环境可用；非零表示环境阻塞。不得安装依赖。
+- run.sh：准备隔离的测试数据，执行操作，采集证据并写 observations.json。场景正常执行完毕返回 0，即使自动断言失败也返回 0；测试框架返回非零时必须解析具体失败，不能吞掉启动错误、超时或选择器错误。执行错误返回非零，并尽量保留部分证据。
+
+使用独立端口，不复用未知服务；等待业务完成条件，不用固定 sleep 推断完成。退出时清理自己启动的服务，不用 nohup/setsid 脱离进程组。默认每阶段 300 秒超时，必要时通过 run_scenario.sh --timeout 指定。
+
+## 观察与原始材料
+
+运行器提供 MAKE_BUG_TASK、MAKE_BUG_RUN_DIR、MAKE_BUG_OBSERVATIONS。原始材料写入本轮 logs/、images/、videos/；不要引用旧轮次或覆盖历史报告。
+
+界面问题优先录制从操作前到操作完成的完整片段，保留关键帧、trace 和事件记录。记录触发动作、业务完成和异常出现的时间点，并说明时间基准（如页面 performance.now 或视频起点）；没有校准时不能将页面时间假称为视频时间。异常太短未被视频捕获、无法录制或关键帧缺失时，如实写入 limitations，引用其他证据。非界面问题记录请求、响应及数据变化，无需强行录屏。
+
+向 MAKE_BUG_OBSERVATIONS 写入：
+
+```json
+{
+  "schema": 1,
+  "observations": [
+    {"name": "计算完成后的滚动位置", "value": {"before": 288, "after": 0}, "evidence": ["logs/events.json", "images/before.png", "images/after.png"]}
+  ],
+  "checks": [
+    {"name": "滚动位置保持不变", "status": "failed", "evidence": ["logs/test-results.json"]}
+  ],
+  "limitations": ["本次仅覆盖一个参数；数据金额随机，不能声称相同数据起点"]
+}
+```
+
+checks.status 为 passed / failed / inconclusive；没有可靠自动断言可留空 checks。evidence 路径相对本轮目录，只引用 logs/、images/、videos/ 下文件；缺失或空文件会提示不足。value 可以保存步骤、时间及实际数值。原始框架结果必须保留；不要只凭退出码认定目标异常，不要把推测写成观察事实。
+
+## 运行、版本和评审
+
+- 执行 bash run_scenario.sh；重复观察用 --repeat 3。无需基线，没有 --baseline 或 --prepare。环境缺失时独立使用 prepare_deps.py 或按 ENVIRONMENT.md 恢复后再运行。
+- 场景允许修改再运行，每轮保存场景摘要和归档；运行期间禁止修改场景及业务代码，否则报告提示不可直接对照。
+- 每轮 REPORT.md / record.json 保存执行状态、观察、检查、证据清单和待评审状态。退出码 0 只表示执行并交付了有效结构的观察记录，不表示 Bug 已消失，也不保证证据完整。
+- 人或 AI 在 result/REPRO.md 写评审结论，引用具体 run ID、文件和时间段，注明判断者、覆盖范围及不足；不改写原始运行记录。参考轮次由评审选择，不由第一次断言失败自动建立。
+- code/source.tar.gz 包含 Git 跟踪及未忽略的未跟踪文件，含文件权限与符号链接；被忽略的依赖、外部文件和数据库不包含。数据恢复方式必须单独说明；代码快照不等于完整环境快照。
+- 两次观察条件变化时先解释差异，不能仅凭两次断言从失败到通过就宣布整个 Issue 修复。本阶段不提供自动前后对照或自动评审。

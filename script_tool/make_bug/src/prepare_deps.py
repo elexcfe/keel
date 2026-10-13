@@ -8,11 +8,13 @@ import os
 from pathlib import Path
 import platform
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
 
 from progress import run_progress
+import dependency_inventory as inventory
 
 
 class DependencyError(Exception):
@@ -170,6 +172,7 @@ def portable(repo, manager, version):
 
 def prepare(task, retry=False, profile_override=None):
     repo = (task / 'repo').resolve()
+    inventory.scan(task)
     selected = detect(repo)
     if not selected:
         print('非 Node 项目，跳过依赖缓存。')
@@ -198,6 +201,11 @@ def prepare(task, retry=False, profile_override=None):
         env['YARN_CACHE_FOLDER'] = str(downloads / ('yarn1' if version.startswith('1.') else 'yarn'))
         if not version.startswith('1.'):
             env['YARN_ENABLE_GLOBAL_CACHE'] = 'false'
+    inventory.update(task, [
+        {'name': name, 'version': actual, 'path': str(Path(shutil.which(name)).resolve()) if shutil.which(name) else name,
+         'installer': 'unknown', 'install_method': 'existing runtime; original installation unknown', 'status': 'detected'}
+        for name, actual in [('node', output(['node', '--version'], repo, env)), (manager, version)]
+    ], preserve=True)
     key = fingerprint(repo, manager, version, env)
     reuse_key = reuse_fingerprint(repo, manager, version, env, config.get('dependency_inputs'))
     bucket = cache / 'installed' / config['project'] / key
@@ -222,6 +230,8 @@ def prepare(task, retry=False, profile_override=None):
             if not retry and not (matching and previous.get('status') in ('installing', 'failed')):
                 raise DependencyError('已有未匹配的依赖，保留不覆盖。确认需要续装后运行 python3 prepare_deps.py --retry，或自行管理环境并设置 MAKE_BUG_SKIP_DEPS=1。')
             print('重试依赖安装，使用已有下载缓存。')
+        inventory.project_state(task, 'installing')
+        method = 'cache-copy: ' + str(bucket)
         status = 'installed'
         manifest = bucket / 'complete.json'
         if manifest.is_file() and not has_existing:
@@ -235,6 +245,7 @@ def prepare(task, retry=False, profile_override=None):
             print('已复制独立的 node_modules，跳过安装。')
         else:
             cmd = install_command(manager, version, downloads)
+            method = shlex.join(cmd)
             print('准备依赖：' + ' '.join(cmd), flush=True)
             attempt = {'key': key, 'reuse_key': reuse_key, 'status': 'installing', 'manager': manager, 'version': version, 'profile': profile}
             state.write_text(json.dumps(attempt, ensure_ascii=False, indent=2) + '\n')
@@ -242,10 +253,12 @@ def prepare(task, retry=False, profile_override=None):
                 with (log_dir / 'dependencies.log').open('w') as log:
                     result = run_progress(cmd, cwd=repo, env=env, log=log, label='准备项目依赖')
             except BaseException:
+                inventory.project_state(task, 'failed')
                 attempt['status'] = 'failed'
                 state.write_text(json.dumps(attempt, ensure_ascii=False, indent=2) + '\n')
                 raise
             if result.returncode:
+                inventory.project_state(task, 'failed')
                 attempt.update(status='failed', exit_code=result.returncode)
                 state.write_text(json.dumps(attempt, ensure_ascii=False, indent=2) + '\n')
                 (log_dir / 'dependencies.json').write_text(json.dumps(attempt, ensure_ascii=False, indent=2) + '\n')
@@ -267,6 +280,7 @@ def prepare(task, retry=False, profile_override=None):
         record = {'key': key, 'reuse_key': reuse_key, 'status': status, 'manager': manager, 'version': version, 'profile': profile}
         state.write_text(json.dumps(record, ensure_ascii=False, indent=2) + '\n')
         (log_dir / 'dependencies.json').write_text(json.dumps(record, ensure_ascii=False, indent=2) + '\n')
+        inventory.scan(task, method=method, installer=inventory.actor('prepare_deps.py'), status='installed', preserve=False)
         return status
 
 

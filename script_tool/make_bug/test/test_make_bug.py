@@ -187,13 +187,16 @@ class WorkflowTests(unittest.TestCase):
         subprocess.run(["bash", "-n", str(launcher)], check=True)
         fake = self.root / "fake pi"
         fake.write_text("#!/usr/bin/env python3\nimport json, os, sys\nfrom pathlib import Path\n"
-                        "Path('pi-invocation.json').write_text(json.dumps({'cwd':os.getcwd(),'args':sys.argv[1:], 'browser_cache':os.environ.get('PLAYWRIGHT_BROWSERS_PATH'), 'task_tools':os.environ.get('MAKE_BUG_TASK_TOOLS')}))\n"
+                        "Path('pi-invocation.json').write_text(json.dumps({'installer':os.environ.get('MAKE_BUG_INSTALLER'),'inventory':json.loads(Path('dependencies.json').read_text()),'cwd':os.getcwd(),'args':sys.argv[1:], 'browser_cache':os.environ.get('PLAYWRIGHT_BROWSERS_PATH'), 'task_tools':os.environ.get('MAKE_BUG_TASK_TOOLS')}))\n"
                         "sys.exit(7)\n")
         fake.chmod(0o755)
         result = subprocess.run(["bash", str(launcher), "--print", "--model", "example model"],
                                 cwd=self.root, env={**os.environ, "PI_BIN": str(fake)}, capture_output=True)
         self.assertEqual(result.returncode, 7)
         invocation = json.loads((output / "task/pi-invocation.json").read_text())
+        self.assertEqual(invocation["installer"], "pi")
+        self.assertEqual(invocation["inventory"]["schema"], 1)
+        self.assertIn("先读取 dependencies.json", invocation["args"][-1])
         self.assertEqual(invocation["cwd"], str(output / "task"))
         self.assertEqual(invocation["task_tools"], str(output / "task/tools"))
         self.assertTrue(Path(invocation["browser_cache"]).is_relative_to(self.args.shared_tools_dir))
@@ -217,12 +220,12 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state, {"status": "failed", "exit_code": 6})
         self.assertTrue((output / "task/ENVIRONMENT.md").is_file())
         self.assertTrue((output / "task/setup_tools.py").is_file())
-        self.assertTrue((output / "task/verify.sh").is_file())
-        self.assertTrue((output / "task/verify.py").is_file())
+        self.assertTrue((output / "task/run_scenario.sh").is_file())
+        self.assertTrue((output / "task/run_scenario.py").is_file())
         self.assertTrue((output / "task/progress.py").is_file())
-        self.assertTrue((output / "task/repro").is_dir())
-        self.assertIn(str(output / "task/VERIFICATION.md"), invocation['args'])
-        subprocess.run(['bash', '-n', str(output / "task/verify.sh")], check=True)
+        self.assertTrue((output / "task/scenario").is_dir())
+        self.assertIn(str(output / "task/SCENARIO.md"), invocation['args'])
+        subprocess.run(['bash', '-n', str(output / "task/run_scenario.sh")], check=True)
         invocation = json.loads((output / "task/pi-invocation.json").read_text())
         self.assertIn(str(output / "task/ENVIRONMENT.md"), invocation['args'])
 
@@ -253,6 +256,9 @@ raise SystemExit(0 if Path('output-seen').exists() else 6)
     def test_upgrade_runner_preserves_task_and_config(self):
         task = self.prepare() / 'task'
         (task / 'run_pi.sh').write_text('old launcher\n')
+        (task / 'verify.sh').write_text('old verify\n')
+        (task / 'repro').mkdir()
+        (task / 'repro/baseline.json').write_text('historical evidence')
         (task / 'setup_tools.py').unlink()
         (task / 'TASK.md').write_text('user instructions\n')
         config = (task / 'deps-config.json').read_bytes()
@@ -263,7 +269,11 @@ raise SystemExit(0 if Path('output-seen').exists() else 6)
         self.assertEqual((task / 'repo/app.txt').read_text(), 'bug\n')
         self.assertEqual((task / 'run_pi.sh').read_text(), m.LAUNCHER)
         self.assertTrue((task / 'setup_tools.py').is_file())
-        self.assertIn('自主判断依赖与跨 Issue 缓存', (task / 'ENVIRONMENT.md').read_text())
+        self.assertIn('python3 dependency_inventory.py show', (task / 'ENVIRONMENT.md').read_text())
+        self.assertFalse((task / 'verify.sh').exists())
+        self.assertEqual((backup / 'verify.sh').read_text(), 'old verify\n')
+        self.assertEqual((task / 'repro/baseline.json').read_text(), 'historical evidence')
+        self.assertTrue((task / 'evidence.py').exists())
         self.assertIsNone(update_task.update(task))
 
     def test_clone_branch(self):

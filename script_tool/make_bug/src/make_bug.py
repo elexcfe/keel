@@ -132,38 +132,7 @@ def read_task_template():
 LAUNCHER = """#!/usr/bin/env bash
 set -euo pipefail
 task_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-cd -- "$task_dir"
-pi_bin="${PI_BIN:-pi}"
-if ! command -v "$pi_bin" >/dev/null 2>&1; then
-  echo '找不到 pi；请安装 pi 并配置模型，或设置 PI_BIN。' >&2
-  exit 127
-fi
-mkdir -p -- result/images result/logs
-tools_env="$(python3 "$task_dir/prepare_tools.py")"
-eval "$tools_env"
-deps_status=skipped
-deps_exit=0
-if [[ "${MAKE_BUG_SKIP_DEPS:-0}" != "1" ]]; then
-  echo '正在预备依赖；失败时将交给 pi 诊断。' >&2
-  if python3 -u "$task_dir/prepare_deps.py" 2>&1 | tee result/logs/dependency-preparation.log; then
-    deps_status=ready
-  else
-    deps_exit=$?
-    deps_status=failed
-  fi
-fi
-printf '{"status":"%s","exit_code":%d}\\n' "$deps_status" "$deps_exit" >result/logs/dependency-preparation.json
-if [[ "$deps_status" == failed ]]; then
-  echo '依赖预备失败，启动 pi 读取日志并处理；尚未视为环境就绪。' >&2
-fi
-echo '开始复现：允许联网准备依赖，禁止网络搜索及查阅修复答案；交付目录为 result/。' >&2
-exec "$pi_bin" --no-extensions --no-skills --no-prompt-templates \\
-  --no-context-files --no-mcp \\
-  --tools read,bash,edit,write,grep,find,ls \\
-  --append-system-prompt "$task_dir/TASK.md" \\
-  --append-system-prompt "$task_dir/VERIFICATION.md" \\
-  --append-system-prompt "$task_dir/ENVIRONMENT.md" "$@" \\
-  "@${task_dir}/BUG.md" '先检查 result/logs/dependency-preparation.json；按 ENVIRONMENT.md 处理环境状态，再执行 TASK.md 中的复现任务。'
+exec python3 "$task_dir/run_pi.py" "$@"
 """
 
 
@@ -259,15 +228,23 @@ def prepare(args):
         (task / "run_pi.sh").write_text(LAUNCHER, encoding="utf-8")
         (task / "run_pi.sh").chmod(0o755)
         shutil.copyfile(TOOL_ROOT / "resource/prompts/environment.md", task / "ENVIRONMENT.md")
+        for source, target in (("prepare.md", "PREPARE.md"), ("monitor.md", "MONITOR.md")):
+            shutil.copyfile(TOOL_ROOT / "resource/prompts" / source, task / target)
+        for name in ("run_pi.py", "run_isolation.py", "session_stats.py", "process_tree.py", "command_timeout.mjs"):
+            shutil.copyfile(Path(__file__).with_name(name), task / name)
+        shutil.copyfile(Path(__file__).with_name("dependency_inventory.py"), task / "dependency_inventory.py")
+        from dependency_inventory import update as initialize_inventory
+        initialize_inventory(task)
         shutil.copyfile(Path(__file__).with_name("prepare_deps.py"), task / "prepare_deps.py")
         shutil.copyfile(Path(__file__).with_name("prepare_tools.py"), task / "prepare_tools.py")
         shutil.copyfile(Path(__file__).with_name("setup_tools.py"), task / "setup_tools.py")
         shutil.copyfile(Path(__file__).with_name("progress.py"), task / "progress.py")
-        from verify import LAUNCHER as VERIFY_LAUNCHER
-        shutil.copyfile(Path(__file__).with_name("verify.py"), task / "verify.py")
-        (task / "verify.sh").write_text(VERIFY_LAUNCHER)
-        (task / "repro").mkdir()
-        shutil.copyfile(TOOL_ROOT / "resource/prompts/verification.md", task / "VERIFICATION.md")
+        from run_scenario import LAUNCHER as SCENARIO_LAUNCHER
+        shutil.copyfile(Path(__file__).with_name("run_scenario.py"), task / "run_scenario.py")
+        shutil.copyfile(Path(__file__).with_name("evidence.py"), task / "evidence.py")
+        (task / "run_scenario.sh").write_text(SCENARIO_LAUNCHER)
+        (task / "scenario").mkdir()
+        shutil.copyfile(TOOL_ROOT / "resource/prompts/scenario.md", task / "SCENARIO.md")
         shared_tools = getattr(args, "shared_tools_dir", None) or TOOL_ROOT / "tools/shared"
         (task / "tools-config.json").write_text(json.dumps({"shared": str(shared_tools.resolve())}, indent=2) + "\n")
         for directory in ("bin", "node", "python", "tmp"):

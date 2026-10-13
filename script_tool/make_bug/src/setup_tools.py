@@ -7,9 +7,12 @@ import os
 from pathlib import Path
 import platform
 import re
+import shlex
 import subprocess
 
 from prepare_tools import shared_environment
+import dependency_inventory as inventory
+from dependency_inventory import tool_entries
 
 
 def setup(shared, version):
@@ -27,17 +30,50 @@ def setup(shared, version):
         destination.mkdir(exist_ok=True)
         marker = destination / 'installed.json'
         cli = destination / 'node_modules/playwright/cli.js'
-        if not marker.exists() or not cli.exists():
-            (destination / 'package.json').write_text(json.dumps({'private': True, 'name': 'make-bug-browser-tools'}))
-            subprocess.run(['npm', 'install', '--prefix', str(destination), '--save-exact',
-                            '--ignore-scripts', '--no-audit', '--no-fund', f'playwright@{version}'], env=env, check=True)
-        # 即便已经安装，也检查浏览器是否被清理；官方安装器对命中的 revision 不重复下载。
-        subprocess.run(['node', str(cli), 'install', 'chromium'], env=env, check=True)
-        marker.write_text(json.dumps({'playwright': version, 'node': node_version,
+        reused = marker.exists() and cli.exists()
+        previous = json.loads(marker.read_text()) if reused else {}
+        method = shlex.join(['npm', 'install', '--prefix', str(destination), '--save-exact',
+                             '--ignore-scripts', '--no-audit', '--no-fund', f'playwright@{version}'])
+        before = tool_entries(destination, env, 'unknown', 'existing; original installation unknown')
+        old = {(e['name'], e['path']): e for e in [*before, *previous.get('dependencies', [])]}
+        try:
+            if not reused:
+                (destination / 'package.json').write_text(json.dumps({'private': True, 'name': 'make-bug-browser-tools'}))
+                subprocess.run(['npm', 'install', '--prefix', str(destination), '--save-exact',
+                                '--ignore-scripts', '--no-audit', '--no-fund', f'playwright@{version}'], env=env, check=True)
+            # 官方安装器对已命中的浏览器 revision 不重复下载。
+            subprocess.run(['node', str(cli), 'install', 'chromium'], env=env, check=True)
+        except BaseException:
+            entries = [{**e, 'status': 'unverified'} for e in tool_entries(destination, env, inventory.actor('setup_tools.py'), method)]
+            for entry in entries:
+                known = old.get((entry['name'], entry['path']))
+                if reused and known and known['version'] == entry['version']:
+                    entry.update(known)
+                    entry['status'] = 'unverified'
+            publish(shared, entries)
+            if marker.exists():
+                marker.write_text(json.dumps({**previous, 'dependencies': entries, 'status': 'failed'}, indent=2) + '\n')
+            raise
+        entries = tool_entries(destination, env, inventory.actor('setup_tools.py'), method)
+        for entry in entries:
+            known = old.get((entry['name'], entry['path']))
+            is_browser = entry['name'] in ('chromium', 'chromium-headless-shell', 'ffmpeg')
+            if (reused or is_browser) and known and known['version'] == entry['version']:
+                entry.update(known)
+                entry['status'] = 'installed'
+        publish(shared, entries)
+        marker.write_text(json.dumps({'dependencies': entries, 'playwright': version, 'node': node_version,
                                      'browser_cache': env['PLAYWRIGHT_BROWSERS_PATH'],
                                      'status': 'installed-not-runtime-validated'}, indent=2) + '\n')
     print(f'共享 Playwright：{destination}\n浏览器缓存：{env["PLAYWRIGHT_BROWSERS_PATH"]}')
     return destination
+
+
+def publish(shared, entries):
+    inventory.update(shared, entries)
+    task = Path(__file__).resolve().parent
+    if (task / 'tools-config.json').exists():
+        inventory.update(task, entries)
 
 
 def default_shared():
