@@ -162,14 +162,14 @@ def summarize(root):
                         and isinstance(review.get('reviewer'), str) and bool(review['reviewer'].strip())
                         and isinstance(review.get('evidence'), list) and bool(review['evidence'])
                         and all(isinstance(e, str) and e.strip() for e in review['evidence']))
-        accepted = valid_review and review['outcome'] == 'reproduced'
-        rows.append({'run': str(path.parent), 'workflow': run['workflow'], 'pair_id': run.get('pair_id'),
+        accepted = run.get('purpose', 'reproduce') == 'reproduce' and valid_review and review['outcome'] == 'reproduced'
+        rows.append({'run': str(path.parent), 'workflow': run['workflow'], 'purpose': run.get('purpose', 'reproduce'), 'pair_id': run.get('pair_id'),
                      'status': run['status'], 'elapsed_seconds': metrics['elapsed_seconds'],
                      'cost': metrics['totals']['cost'], 'known_cost': metrics['known_totals']['cost'],
                      'accepted_reproduction': accepted, 'review_outcome': review['outcome'] if valid_review else 'pending'})
     groups = {}
     for workflow in ('single', 'split'):
-        selected = [r for r in rows if r['workflow'] == workflow]
+        selected = [r for r in rows if r['workflow'] == workflow and r['purpose'] == 'reproduce']
         complete = bool(selected) and all(r['cost'] is not None for r in selected)
         successes = sum(r['accepted_reproduction'] for r in selected)
         cost = sum(r['cost'] for r in selected) if complete else None
@@ -177,8 +177,8 @@ def summarize(root):
                             'total_cost': cost, 'cost_per_accepted_reproduction': cost / successes if cost is not None and successes else None,
                             'reviews_pending': sum(r['review_outcome'] == 'pending' for r in selected)}
     pairs = []
-    for pair_id in sorted({r['pair_id'] for r in rows if r['pair_id']}):
-        members = [r for r in rows if r['pair_id'] == pair_id]
+    for pair_id in sorted({r['pair_id'] for r in rows if r['pair_id'] and r['purpose'] == 'reproduce'}):
+        members = [r for r in rows if r['pair_id'] == pair_id and r['purpose'] == 'reproduce']
         if len(members) != 2 or {r['workflow'] for r in members} != {'single', 'split'}:
             pairs.append({'pair_id': pair_id, 'status': 'incomplete_or_duplicate'})
             continue
@@ -188,7 +188,7 @@ def summarize(root):
                       'single_accepted': a['accepted_reproduction'], 'split_accepted': b['accepted_reproduction'],
                       'split_minus_single_cost': b['cost'] - a['cost'] if a['cost'] is not None and b['cost'] is not None else None})
     return {'schema': 1, 'runs': rows, 'groups': groups, 'pairs': pairs,
-            'note': '描述性汇总，不自动得出 A/B 因果结论；未验收不能当作复现成功。'}
+            'note': '描述性汇总，不自动得出 A/B 因果结论；未验收不能当作复现成功；修复任务保留明细，但不计入复现分组及配对统计。'}
 
 
 def main():

@@ -407,7 +407,43 @@ bash /path/to/task/run_scenario.sh --repeat 3 --timeout 300
 
 执行状态为 completed / blocked / error / interrupted，分别返回 0 / 2 / 1 / 130。**退出 0 只表示执行并交付了有效结构的记录，不代表 Bug 不存在，也不保证视频或检查内容正确。** 检查结果 passed / failed / inconclusive 单独保存；证据缺失和执行期间文件变化单独列为警告。重复执行遇到非 completed 停止，不对多轮自动宣称稳定。
 
-修改场景后可以直接重跑，新轮次保留新版本，旧记录不覆盖。Pi 在 result/REPRO.md 交付复现报告；人或独立验收 AI 将评审另存于监测目录 review.json 或 Issue，引用运行 ID、视频/事件时间点和文件，不覆盖 Pi 报告及原始记录。参考轮次由评审选择。本阶段没有自动修复、两轮对照生成器或 AI 视频判断器。
+修改场景后可以直接重跑，新轮次保留新版本，旧记录不覆盖。Pi 在 result/REPRO.md 交付复现报告；人或独立验收 AI 将评审另存于监测目录 review.json 或 Issue，引用运行 ID、视频/事件时间点和文件，不覆盖 Pi 报告及原始记录。参考轮次由评审选择。默认复现模式不判断修复；修复模式的参考对照见下一节。没有自动语义验收或 AI 视频判断器。
+
+## 同一会话修复闭环
+
+这是通用工具能力，已用合成项目和假 Pi 做离线验证；尚未证明真实 Pi 完成修复。当前不启动新的付费实验。具体场景、数据、测试和 FIX.md 必须由 Pi 产出，不能由验收者补写。
+
+新场景使用 schema 2，在 manifest.required_checks 中声明稳定 id、kind（target/regression）和 expected（正常行为预期），每轮 checks 引用相同 ID。缺项、重复、未执行或无有效证据均不能准入。旧 schema 1 仍可运行，但须由 Pi 更新并重跑，经独立审阅后才能进入修复。必要回归属于已确认场景的一部分；其在参考版本应通过，目标检查至少一项失败。第一版不自动豁免已有回归失败。
+
+外层审核者确认原问题覆盖、断言、数据条件和视频/日志后，显式选定运行；以下是后续获准真实运行时的操作示例，不能仅凭脚本接受就代替审阅：
+
+```bash
+# 已有任务可先用 update_task.py 更新通用运行脚本；不会转换 Pi 的场景或报告。
+python3 script_tool/make_bug/src/update_task.py /path/to/task
+
+# 由验收者记录准入，输出必须位于任务外且不能覆盖已有文件。
+python3 /path/to/task/repair.py --task /path/to/task \
+  --run '<已审阅的 run-ID>' --reviewer '<验收者>' \
+  --evidence '<审阅记录或证据位置与结论依据>' \
+  --output /path/to/review/reference.json
+
+# 只启动一个修复会话；该命令会调用模型，须在获准真实运行后执行。
+bash /path/to/task/run_pi.sh --purpose repair \
+  --reference /path/to/review/reference.json --timeout 3600 --cost-limit '<授权预算>' \
+  -- --print --provider '<provider>' --model '<model>'
+```
+
+修复只支持 single 和已有已验收任务，不再次 --isolate，避免复制时丢失参考记录或未提交的复现脚本。启动前核对源码与参考一致，环境准备后再次核对。使用 REPAIR.md、ENVIRONMENT.md、MONITOR.md，不加载禁止修改业务代码的 TASK.md/SCENARIO.md。
+
+Pi 可先做局部测试，再用 `bash run_scenario.sh` 正式验证。执行器通过 MAKE_BUG_REPAIR_REFERENCE 自动取得本次参考，也可在独立复验时显式使用 `--reference /path/to/reference.json`。一次调用只运行一次场景，结果立即回到同一 Pi 会话，失败后可在总预算内继续修改。不会退出 Pi 再启动报告阶段，也不会自动追加会话。
+
+修复验证的 record.json.repair.status 分为 checks_passed、checks_failed、blocked、invalid；stdout 提供每项检查、运行编号、错误及完整记录路径。目标/回归仍失败返回 3，完整性或参考错误返回非零（执行错误为 1，完成后对照无效为 4），环境阻塞为 2。checks_passed 返回 0，但仍不等于独立验收通过。默认复现模式保留原有退出语义。`--timeout` 现在约束整轮场景，check/run 共用时限；在修复会话内也受父任务剩余时间及报告预留时间约束。
+
+Pi 应逐轮更新 result/FIX.md，保留 REPRO.md，并引用准确的前后运行编号、证据和必要回归结果。执行器保存 FIX.partial.md。结束后监测目录中的 repair-result.json 核对本次最后一轮正式运行、最终代码、报告及引用；只有完整一致才标记 awaiting_review，否则 incomplete。Pi 进程退出码与修复交付状态分开，调用者必须读取 repair-result.json，不能凭 run_pi.sh 退出 0 宣称交付成功。
+
+awaiting_review 仍须独立检查原因、覆盖、画面、回归充分性和人工介入；不会自动写 accepted。瞬间异常可以视频为主，Pi 要说明时间段与观察点。Actual 的最终真实验收仍需必要独立重跑，日常调试不强制重复执行。
+
+参考记录绑定原始记录、场景及源码归档摘要，交付版本绑定最后验证的源码摘要。源码归档不含被忽略依赖、数据库或外部文件，配置/依赖变化仍需审查；相同用户的任意 shell 可以访问这些材料，因此摘要校验不是安全沙箱。修复耗时/费用单独记录，历史复现成本不会自动消失，也不把修复阶段预算宣称为全流程成本。统计明细包含 purpose，修复任务不计入旧 single/split 复现率或 A/B 配对。
 
 ## Pi 运行监测（默认开启）
 

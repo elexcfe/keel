@@ -8,12 +8,23 @@
 
 在 task/scenario/ 创建以下文件：
 
-- manifest.json：schema 为 1；title 为场景标题；data 描述测试数据来源、恢复方式及随机性；steps 是操作步骤列表；coverage 列出实际观察范围；files 列出测试、配置、数据样本及辅助文件的任务内相对路径。env.sh、check.sh、run.sh 和 manifest.json 自动纳入版本摘要与归档。不要把业务实现放进 files。
+- manifest.json：schema 为 2；title 为场景标题；data 描述测试数据来源、恢复方式及随机性；steps 是操作步骤列表；coverage 列出实际观察范围；files 列出测试、配置、数据样本及辅助文件的任务内相对路径。env.sh、check.sh、run.sh 和 manifest.json 自动纳入版本摘要与归档。不要把业务实现放进 files。required_checks 声明必需检查，每项包含稳定 id、kind（target 或 regression）和 expected（正常行为预期）。目标检查在问题版本失败，在修复后应通过；必要回归在前后都应通过。按原 Issue 覆盖必要操作路径，不能只声明容易检查的部分。
 - env.sh：仅导出所需环境变量，不安装、不启动服务、不改代码。路径从 MAKE_BUG_TASK 推导。
 - check.sh：检查依赖、浏览器或其他运行条件。返回 0 表示环境可用；非零表示环境阻塞。不得安装依赖。
 - run.sh：准备隔离的测试数据，执行操作，采集证据并写 observations.json。场景正常执行完毕返回 0，即使自动断言失败也返回 0；测试框架返回非零时必须解析具体失败，不能吞掉启动错误、超时或选择器错误。执行错误返回非零，并尽量保留部分证据。
 
-使用独立端口，不复用未知服务；等待业务完成条件，不用固定 sleep 推断完成。退出时清理自己启动的服务，不用 nohup/setsid 脱离进程组。默认每阶段 300 秒超时，必要时通过 run_scenario.sh --timeout 指定。
+使用独立端口，不复用未知服务；等待业务完成条件，不用固定 sleep 推断完成。退出时清理自己启动的服务，不用 nohup/setsid 脱离进程组。默认整轮 300 秒总时限，必要时通过 run_scenario.sh --timeout 指定。
+
+required_checks 示例（实际 ID、预期和回归范围由你按任务产出，不能照抄凑数）：
+
+```json
+[
+  {"id": "scroll-preserved", "kind": "target", "expected": "操作完成后滚动位置保持"},
+  {"id": "calculation-correct", "kind": "regression", "expected": "操作完成后的计算值符合固定输入的预期"}
+]
+```
+
+下面的 observations 示例只演示一条结果的格式；实际必须包含 manifest 声明的全部检查。
 
 ## 观察与原始材料
 
@@ -27,18 +38,18 @@
 
 ```json
 {
-  "schema": 1,
+  "schema": 2,
   "observations": [
     {"name": "计算完成后的滚动位置", "value": {"before": 288, "after": 0}, "evidence": ["logs/events.json", "images/before.png", "images/after.png"]}
   ],
   "checks": [
-    {"name": "滚动位置保持不变", "status": "failed", "evidence": ["logs/test-results.json"]}
+    {"id": "scroll-preserved", "name": "滚动位置保持不变", "status": "failed", "evidence": ["logs/test-results.json"]}
   ],
   "limitations": ["本次仅覆盖一个参数；数据金额随机，不能声称相同数据起点"]
 }
 ```
 
-checks.status 为 passed / failed / inconclusive；没有可靠自动断言可留空 checks。evidence 路径相对本轮目录，只引用 logs/、images/、videos/ 下文件；缺失或空文件会提示不足。value 可以保存步骤、时间及实际数值。原始框架结果必须保留；不要只凭退出码认定目标异常，不要把推测写成观察事实。
+checks.status 为 passed / failed / inconclusive；每项 checks.id 必须与 required_checks 对应，不能遗漏、重复或临时改名。无法执行时明确写 inconclusive，不冒充通过；前一条断言失败不能把后续未执行检查写成 passed。缺少可靠自动断言时如实记录 limitations，不具备修复准入条件。evidence 路径相对本轮目录，只引用 logs/、images/、videos/ 下文件；缺失或空文件会提示不足。value 可以保存步骤、时间及实际数值。原始框架结果必须保留；不要只凭退出码认定目标异常，不要把推测写成观察事实。
 
 ## 运行、版本和评审
 
@@ -47,7 +58,7 @@ checks.status 为 passed / failed / inconclusive；没有可靠自动断言可�
 - 每轮 REPORT.md / record.json 保存执行状态、观察、检查、证据清单和待评审状态。退出码 0 只表示执行并交付了有效结构的观察记录，不表示 Bug 已消失，也不保证证据完整。
 - 你在 result/REPRO.md 写复现报告和自述结论，引用具体 run ID、文件和时间段，说明覆盖范围及不足。外层验收者另存评审记录（如监测目录 review.json 或 Issue），不覆盖你的报告或原始运行记录。参考轮次由外层评审选择，不由第一次断言失败自动建立。
 - code/source.tar.gz 包含 Git 跟踪及未忽略的未跟踪文件，含文件权限与符号链接；被忽略的依赖、外部文件和数据库不包含。数据恢复方式必须单独说明；代码快照不等于完整环境快照。
-- 两次观察条件变化时先解释差异，不能仅凭两次断言从失败到通过就宣布整个 Issue 修复。本阶段不提供自动前后对照或自动评审。
+- 两次观察条件变化时先解释差异，不能仅凭两次断言从失败到通过就宣布整个 Issue 修复。修复模式可对照已验收参考，但不会自动完成语义评审。旧 schema 1 可运行，不能直接作为修复准入材料。
 
 ## 观察与结束要求
 

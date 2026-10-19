@@ -228,9 +228,9 @@ def prepare(args):
         (task / "run_pi.sh").write_text(LAUNCHER, encoding="utf-8")
         (task / "run_pi.sh").chmod(0o755)
         shutil.copyfile(TOOL_ROOT / "resource/prompts/environment.md", task / "ENVIRONMENT.md")
-        for source, target in (("prepare.md", "PREPARE.md"), ("monitor.md", "MONITOR.md")):
+        for source, target in (("prepare.md", "PREPARE.md"), ("monitor.md", "MONITOR.md"), ("repair.md", "REPAIR.md")):
             shutil.copyfile(TOOL_ROOT / "resource/prompts" / source, task / target)
-        for name in ("run_pi.py", "run_isolation.py", "session_stats.py", "process_tree.py", "delivery.py", "command_timeout.mjs"):
+        for name in ("run_pi.py", "repair.py", "run_isolation.py", "session_stats.py", "process_tree.py", "delivery.py", "command_timeout.mjs"):
             shutil.copyfile(Path(__file__).with_name(name), task / name)
         shutil.copyfile(Path(__file__).with_name("dependency_inventory.py"), task / "dependency_inventory.py")
         from dependency_inventory import update as initialize_inventory

@@ -11,6 +11,9 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
+
+import repair
 
 import evidence
 import process_tree
@@ -40,7 +43,19 @@ def execute(task, script, env, log, timeout):
             evidence.save(log.with_suffix('.cleanup.json'), scope.stop(process))
 
 
-def run_once(task, timeout=300):
+def run_once(task, timeout=300, reference=None):
+    deadline = time.monotonic() + timeout
+    if os.environ.get('MAKE_BUG_DEADLINE_MS'):
+        remaining = (float(os.environ['MAKE_BUG_DEADLINE_MS']) - float(os.environ.get('MAKE_BUG_WRAP_UP_MS', '0'))) / 1000 - time.time()
+        deadline = min(deadline, time.monotonic() + max(0, remaining))
+
+    def remaining():
+        seconds = deadline - time.monotonic()
+        if seconds <= 0:
+            raise subprocess.TimeoutExpired('scenario total deadline', timeout)
+        return seconds
+
+    baseline = None
     root = task / 'result/runs'
     root.mkdir(parents=True, exist_ok=True)
     run = Path(tempfile.mkdtemp(prefix=f'run-{datetime.now(timezone.utc):%Y%m%dT%H%M%S}-', dir=root))
@@ -55,6 +70,11 @@ def run_once(task, timeout=300):
     repo = task / 'repo'
     phase = 'capture'
     try:
+        if reference:
+            baseline = repair.load_reference(task, reference)
+            errors = repair.current_matches(task, baseline)
+            if errors:
+                raise ValueError('\n'.join(errors))
         if (task / 'BUG.md').is_file():
             problem = evidence.local_file(task, 'BUG.md').read_bytes()
             (run / 'BUG.md').write_bytes(problem)
@@ -69,12 +89,12 @@ def run_once(task, timeout=300):
         env = {**os.environ, **prepare_tools.prepare(task), 'MAKE_BUG_TASK': str(task),
                'MAKE_BUG_RUN_DIR': str(run), 'MAKE_BUG_OBSERVATIONS': str(run / 'observations.json')}
         phase = 'check'
-        rc = execute(task, task / 'scenario/check.sh', env, run / 'logs/check.log', timeout)
+        rc = execute(task, task / 'scenario/check.sh', env, run / 'logs/check.log', remaining())
         if rc:
             record['execution'] = {'status': 'blocked', 'reason': '环境检查未通过，见 logs/check.log', 'phase': phase, 'exit_code': rc}
         else:
             phase = 'run'
-            rc = execute(task, task / 'scenario/run.sh', env, run / 'logs/run.log', timeout)
+            rc = execute(task, task / 'scenario/run.sh', env, run / 'logs/run.log', remaining())
             record['execution'] = {'status': 'completed' if rc == 0 else 'error',
                                    'reason': '场景执行完成；检查结果另行记录' if rc == 0 else '场景执行出错，见 logs/run.log',
                                    'phase': phase, 'exit_code': rc}
@@ -115,18 +135,31 @@ def run_once(task, timeout=300):
         except (OSError, ValueError, KeyError) as exc:
             record['integrity_warnings'].append('无法读取清理记录：' + str(exc))
     record['evidence'] = evidence.collect_evidence(run, observation_data)
+    record['validation'] = evidence.validate_checks(record)
+    if reference:
+        record['repair'] = repair.compare(baseline, record) if baseline else {
+            'status': 'invalid', 'errors': ['修复参考未能加载。'], 'review': 'pending'}
     record['finished_at'] = now()
     evidence.save(run / 'record.json', record)
     evidence.markdown(run, record)
     print(f'{record["execution"]["status"]}：{record["execution"]["reason"]}\n报告：{run / "REPORT.md"}', flush=True)
+    print(json.dumps({'run_id': record['run_id'], 'checks': [
+        {'id': c.get('id', c.get('name')), 'status': c['status']} for c in record['checks']],
+        'validation': record['validation'], 'repair': record.get('repair'),
+        'record': str(run / 'record.json')}, ensure_ascii=False), flush=True)
     return run, record
 
 
 def main(task=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repeat', type=int, default=1, choices=range(1, 11), metavar='1..10')
-    parser.add_argument('--timeout', type=float, default=300, help='环境检查及场景执行各自的超时秒数')
+    parser.add_argument('--timeout', type=float, default=300, help='整轮场景总时限，同时受修复任务剩余时限约束')
+    parser.add_argument('--reference', type=Path, help='外层已验收的复现参考；修复会话默认从环境读取')
     args = parser.parse_args()
+    inherited = os.environ.get('MAKE_BUG_REPAIR_REFERENCE')
+    if inherited and args.reference and args.reference.resolve() != Path(inherited).resolve():
+        parser.error('不能覆盖本次修复的参考运行。')
+    reference = Path(inherited) if inherited else args.reference
     if not 0 < args.timeout < float('inf'):
         parser.error('--timeout 必须为有限正数')
     def interrupted(signum, frame):
@@ -140,10 +173,12 @@ def main(task=None):
             print('同一任务已有场景运行，请等待完成。', file=sys.stderr)
             return 2
         for _ in range(args.repeat):
-            _, record = run_once(task, args.timeout)
+            _, record = run_once(task, args.timeout, reference=reference) if reference else run_once(task, args.timeout)
             status = record['execution']['status']
             if status != 'completed':
                 return {'blocked': 2, 'error': 1, 'interrupted': 130}[status]
+            if reference and record['repair']['status'] != 'checks_passed':
+                return 3 if record['repair']['status'] == 'checks_failed' else 4
     return 0
 
 

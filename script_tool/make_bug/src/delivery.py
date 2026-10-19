@@ -8,9 +8,10 @@ from session_stats import save
 REQUIRED = ('result/REPRO.md', 'scenario/manifest.json', 'scenario/env.sh', 'scenario/check.sh', 'scenario/run.sh')
 
 
-def inventory(task):
+def inventory(task, purpose='reproduce'):
     result = {}
-    for name in REQUIRED:
+    required = REQUIRED + ('result/FIX.md',) if purpose == 'repair' else REQUIRED
+    for name in required:
         path = task / name
         try:
             if path.is_symlink() or not path.resolve().is_relative_to(task.resolve()):
@@ -21,13 +22,15 @@ def inventory(task):
     return result
 
 
-def checkpoint(task, run, initial, status):
-    files = inventory(task)
+def checkpoint(task, run, initial, status, purpose='reproduce'):
+    files = inventory(task, purpose)
     missing = [name for name, value in files.items() if 'error' in value or not value.get('bytes')]
-    report = task / 'result/REPRO.md'
+    report_name = 'FIX' if purpose == 'repair' else 'REPRO'
+    report_key = f'result/{report_name}.md'
+    report = task / report_key
     warnings = []
-    if 'result/REPRO.md' not in missing:
-        if files['result/REPRO.md'] == initial.get('result/REPRO.md'):
+    if report_key not in missing:
+        if files[report_key] == initial.get(report_key):
             warnings.append('报告与运行前一致，不能证明是本轮交付。')
         try:
             content = report.read_text()
@@ -37,7 +40,7 @@ def checkpoint(task, run, initial, status):
                 path = report.parent / unquote(target.split('#')[0].strip('<>'))
                 if not path.resolve().is_relative_to(task.resolve()) or not path.is_file() or not path.stat().st_size:
                     warnings.append('报告本地链接不可读取：' + target)
-            (run / 'REPRO.partial.md').write_text(content)
+            (run / f'{report_name}.partial.md').write_text(content)
         except (OSError, UnicodeError) as exc:
             warnings.append('报告不可读取：' + str(exc))
     runs = task / 'result/runs'

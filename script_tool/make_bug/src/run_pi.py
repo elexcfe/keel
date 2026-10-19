@@ -17,6 +17,7 @@ import uuid
 
 import delivery
 import process_tree
+import repair
 from evidence import source_snapshot, file_digest
 from run_isolation import isolate
 from session_stats import refresh, save
@@ -40,7 +41,8 @@ def execute(command, *, task, env, run, label, deadline, cost_limit=None, intera
         return result
     process = None
     scope = process_tree.Scope()
-    initial_delivery = delivery.inventory(task)
+    purpose = env.get('MAKE_BUG_PURPOSE', 'reproduce')
+    initial_delivery = delivery.inventory(task, purpose)
     try:
         with output.open('wb') as out, error.open('wb') as err, selectors.DefaultSelector() as selector:
             process = subprocess.Popen(command, cwd=task, env=env, start_new_session=True,
@@ -60,7 +62,7 @@ def execute(command, *, task, env, run, label, deadline, cost_limit=None, intera
                     break
                 if now >= next_metric:
                     scope.owned()
-                    delivery.checkpoint(task, run, initial_delivery, result['status'])
+                    delivery.checkpoint(task, run, initial_delivery, result['status'], purpose)
                     metric = refresh(run)
                     save(run / 'live-metrics.json', metric)
                     save(run / 'current.json', {**result, 'elapsed_seconds': now - started})
@@ -108,7 +110,7 @@ def execute(command, *, task, env, run, label, deadline, cost_limit=None, intera
         result['ended_at'] = datetime.now(timezone.utc).isoformat()
         save(run / 'events' / (label + '.json'), result)
         save(run / 'current.json', result)
-        delivery.checkpoint(task, run, initial_delivery, result['status'])
+        delivery.checkpoint(task, run, initial_delivery, result['status'], purpose)
     return result
 
 
@@ -162,6 +164,12 @@ def handoff(task, run):
 def run(args, pi_args):
     if any(a.split('=', 1)[0] in BLOCKED_ARGS for a in pi_args):
         raise ValueError('监测入口管理会话/提示和输出模式，不接受覆盖参数；凭据请通过 Pi 配置提供。')
+    purpose = getattr(args, 'purpose', 'reproduce')
+    reference = getattr(args, 'reference', None)
+    if purpose == 'repair' and (args.workflow != 'single' or args.isolate or not reference):
+        raise ValueError('修复需要 --reference、single 和既有已验收任务；不再次隔离或拆分会话。')
+    if purpose != 'repair' and reference:
+        raise ValueError('--reference 只用于 --purpose repair。')
     source = args.task.resolve()
     task = source
     if args.cache_seed and not args.isolate:
@@ -176,8 +184,11 @@ def run(args, pi_args):
         (run_dir / folder).mkdir()
     started = time.monotonic()
     deadline = started + args.timeout
-    initial_delivery = delivery.inventory(task)
-    state = {'schema': 1, 'workflow': args.workflow, 'pair_id': args.pair_id, 'task': str(task),
+    initial_delivery = delivery.inventory(task, purpose)
+    baseline = None
+    initial_runs = set()
+    reference_digest = None
+    state = {'schema': 1, 'purpose': purpose, 'workflow': args.workflow, 'pair_id': args.pair_id, 'task': str(task),
              'source_task': str(source), 'isolation': 'directory-copy' if args.isolate else 'existing-task',
              'started_at': datetime.now(timezone.utc).isoformat(), 'status': 'running', 'phases': [],
              'timeout_seconds': args.timeout, 'cost_limit': args.cost_limit,
@@ -187,6 +198,8 @@ def run(args, pi_args):
     print(f'Pi 运行记录：{run_dir}', file=sys.stderr, flush=True)
     env = dict(os.environ)
     env['MAKE_BUG_PROCESS_GROUP'] = 'inherit'
+    env['MAKE_BUG_PURPOSE'] = purpose
+    env.pop('MAKE_BUG_REPAIR_REFERENCE', None)
     code = 1
     task_lock = None
     try:
@@ -199,6 +212,17 @@ def run(args, pi_args):
             fcntl.flock(task_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
             raise ValueError('该任务已有 Pi 在运行，请使用另一个隔离副本。') from exc
+        if purpose == 'repair':
+            baseline = repair.load_reference(task, reference.resolve())
+            errors = repair.current_matches(task, baseline, source=True)
+            if errors:
+                raise ValueError('\n'.join(errors))
+            frozen_reference = run_dir / 'repair-reference.json'
+            shutil.copy2(reference, frozen_reference)
+            reference_digest = file_digest(frozen_reference)
+            env['MAKE_BUG_REPAIR_REFERENCE'] = str(frozen_reference)
+            initial_runs = {p.parent.name for p in (task / 'result/runs').glob('*/record.json')}
+            state['baseline_run'] = baseline['run_id']
         if args.isolate:
             private = task.parent / 'runtime'
             for name in ('tmp', 'xdg-cache', 'pnpm', 'yarn', 'npm', 'pip'):
@@ -249,7 +273,11 @@ def run(args, pi_args):
         save(task / 'result/logs/dependency-preparation.json', deps)
         env['MAKE_BUG_INSTALLER'] = 'pi'
         save(run_dir / 'environment.json', {k: env[k] for k in ('MAKE_BUG_PORT', 'MAKE_BUG_INSTALLER', 'MAKE_BUG_SHARED_TOOLS', 'MAKE_BUG_TASK_TOOLS', 'PLAYWRIGHT_BROWSERS_PATH', 'TMPDIR', 'XDG_CACHE_HOME') if k in env})
-        stages = ('single',) if args.workflow == 'single' else ('prepare', 'reproduce')
+        if baseline is not None:
+            errors = repair.current_matches(task, baseline, source=True)
+            if errors:
+                raise ValueError('\n'.join(errors))
+        stages = ('repair',) if purpose == 'repair' else (('single',) if args.workflow == 'single' else ('prepare', 'reproduce'))
         for stage in stages:
             if args.cost_limit is not None and refresh(run_dir)['known_totals']['cost'] >= args.cost_limit:
                 state['status'], code = 'cost_limit', 125
@@ -260,6 +288,8 @@ def run(args, pi_args):
             sessions = run_dir / 'sessions' / stage
             sessions.mkdir()
             prompts = ['PREPARE.md', 'ENVIRONMENT.md', 'MONITOR.md'] if stage == 'prepare' else ['TASK.md', 'SCENARIO.md', 'ENVIRONMENT.md', 'MONITOR.md']
+            if stage == 'repair':
+                prompts = ['REPAIR.md', 'ENVIRONMENT.md', 'MONITOR.md']
             prompt_dir = run_dir / 'prompts' / stage
             prompt_dir.mkdir()
             command = [pi, '--no-extensions', '--no-skills', '--no-prompt-templates', '--no-context-files', '--no-mcp',
@@ -270,6 +300,8 @@ def run(args, pi_args):
                 command += ['--append-system-prompt', str(task / name)]
             shutil.copy2(task / 'BUG.md', prompt_dir / 'BUG.md')
             initial = '按 PREPARE.md 只准备环境并交接，不复现目标 Bug。' if stage == 'prepare' else INITIAL
+            if stage == 'repair':
+                initial = '按 REPAIR.md 完成修复；在本会话内调用 bash run_scenario.sh 检查、纠错并更新 FIX.md。'
             if stage == 'reproduce':
                 initial += ' 这是新会话，先读取 environment/handoff.json；缺失或无效时自行补齐并记录环境返工。'
             (prompt_dir / 'initial.txt').write_text(initial)
@@ -312,16 +344,30 @@ def run(args, pi_args):
         state['exit_code'] = code
         state['ended_at'] = datetime.now(timezone.utc).isoformat()
         save(run_dir / 'run.json', state)
-        state['delivery'] = delivery.checkpoint(task, run_dir, initial_delivery, state['status'])
+        state['delivery'] = delivery.checkpoint(task, run_dir, initial_delivery, state['status'], purpose)
+        if purpose == 'repair':
+            try:
+                if baseline is None or reference_digest != file_digest(run_dir / 'repair-reference.json'):
+                    raise ValueError('修复参考未能加载或发生变化。')
+                repair.load_reference(task, run_dir / 'repair-reference.json')
+                closure = repair.finalize(task, baseline, initial_runs,
+                                          initial_delivery.get('result/FIX.md', {}).get('sha256'))
+                if state['status'] != 'completed' or state['delivery']['delivery'] != 'files_present':
+                    closure['status'] = 'incomplete'
+                    closure['errors'].append('Pi 未正常完成或交付文件检查未通过。')
+            except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as exc:
+                closure = {'status': 'incomplete', 'errors': [str(exc)], 'review': 'pending'}
+            save(run_dir / 'repair-result.json', closure)
+            state['repair'] = closure
         snapshot(task, run_dir, 'final')
         state['elapsed_seconds'] = time.monotonic() - started
         state['ended_at'] = datetime.now(timezone.utc).isoformat()
         save(run_dir / 'run.json', state)
         metrics = refresh(run_dir)
-        expected = ('single',) if args.workflow == 'single' else ('prepare', 'reproduce')
+        expected = ('repair',) if purpose == 'repair' else (('single',) if args.workflow == 'single' else ('prepare', 'reproduce'))
         state['monitoring'] = 'complete' if all(metrics['phases'].get(p, {}).get('totals', {}).get(key) is not None for p in expected for key in metrics['totals']) and not metrics['warnings'] else 'incomplete'
         save(run_dir / 'run.json', state)
-        (run_dir / 'REPORT.md').write_text(f"# Pi 运行记录\n\n方式：{args.workflow}；执行：{state['status']}；监测：{state['monitoring']}。\n\n耗时：{state['elapsed_seconds']:.2f}s；估算费用：{metrics['totals']['cost']}（null/None 表示未知）。\n\nBug 验收待完成，进程成功不代表已复现。查看 DELIVERY.md、delivery.json、run.json、metrics.json 和 sessions/ 原始记录。\n")
+        (run_dir / 'REPORT.md').write_text(f"# Pi 运行记录\n\n目的：{purpose}；方式：{args.workflow}；执行：{state['status']}；监测：{state['monitoring']}。\n\n耗时：{state['elapsed_seconds']:.2f}s；估算费用：{metrics['totals']['cost']}（null/None 表示未知）。\n\nBug 验收待完成，进程成功不代表复现或修复通过。修复核查见 repair-result.json（修复模式）。查看 DELIVERY.md、delivery.json、run.json、metrics.json 和 sessions/ 原始记录。\n")
         if task_lock:
             task_lock.close()
         print(f'运行结束，记录：{run_dir}', file=sys.stderr)
@@ -331,6 +377,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--task', type=Path, default=Path(__file__).resolve().parent)
     parser.add_argument('--workflow', choices=('single', 'split'), default='single')
+    parser.add_argument('--purpose', choices=('reproduce', 'repair'), default='reproduce')
+    parser.add_argument('--reference', type=Path, help='外层已验收复现的准入记录；repair 必需')
     parser.add_argument('--runs-dir', type=Path)
     parser.add_argument('--isolate', type=Path, help='新建隔离副本，要求模板仓库干净')
     parser.add_argument('--cache-seed', type=Path, help='复制下载缓存种子，不复制已安装依赖')

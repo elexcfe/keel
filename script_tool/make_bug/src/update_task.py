@@ -18,7 +18,7 @@ def update(task):
     initialize_inventory(task)
     replacements = {
         name: (TOOL_ROOT / 'src' / name).read_bytes()
-        for name in ('command_timeout.mjs', 'process_tree.py', 'delivery.py', 'run_pi.py', 'run_isolation.py', 'session_stats.py', 'dependency_inventory.py', 'prepare_deps.py', 'prepare_tools.py', 'setup_tools.py', 'run_scenario.py', 'evidence.py', 'progress.py')
+        for name in ('repair.py', 'command_timeout.mjs', 'process_tree.py', 'delivery.py', 'run_pi.py', 'run_isolation.py', 'session_stats.py', 'dependency_inventory.py', 'prepare_deps.py', 'prepare_tools.py', 'setup_tools.py', 'run_scenario.py', 'evidence.py', 'progress.py')
     }
     (task / 'scenario').mkdir(exist_ok=True)
     replacements['run_scenario.sh'] = SCENARIO_LAUNCHER.encode()
@@ -26,6 +26,7 @@ def update(task):
     replacements['run_pi.sh'] = LAUNCHER.encode()
     replacements['ENVIRONMENT.md'] = (TOOL_ROOT / 'resource/prompts/environment.md').read_bytes()
     replacements['PREPARE.md'] = (TOOL_ROOT / 'resource/prompts/prepare.md').read_bytes()
+    replacements['REPAIR.md'] = (TOOL_ROOT / 'resource/prompts/repair.md').read_bytes()
     replacements['MONITOR.md'] = (TOOL_ROOT / 'resource/prompts/monitor.md').read_bytes()
     obsolete = ('verify.sh', 'verify.py', 'VERIFICATION.md')
     if not any((task / name).exists() for name in obsolete) and all((task / name).is_file() and (task / name).read_bytes() == data

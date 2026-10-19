@@ -74,8 +74,8 @@ def source_snapshot(repo, archive=None):
 
 def scenario(task, archive=None):
     manifest = json.loads(local_file(task, 'scenario/manifest.json').read_text())
-    if not isinstance(manifest, dict) or manifest.get('schema') != 1:
-        raise ValueError('scenario/manifest.json 必须是 schema: 1 的对象。')
+    if not isinstance(manifest, dict) or manifest.get('schema') not in (1, 2):
+        raise ValueError('scenario/manifest.json 必须是 schema: 1 或 2 的对象。')
     for key in ('title', 'data'):
         if not isinstance(manifest.get(key), str) or not manifest[key].strip():
             raise ValueError(f'场景需要非空 {key}。')
@@ -83,6 +83,8 @@ def scenario(task, archive=None):
         values = manifest.get(key)
         if not isinstance(values, list) or not values or any(not isinstance(v, str) or not v.strip() for v in values):
             raise ValueError(f'场景需要非空 {key} 列表。')
+    if manifest['schema'] == 2:
+        required_checks(manifest)
     names = set(manifest['files']) | {'scenario/manifest.json', 'scenario/env.sh', 'scenario/check.sh', 'scenario/run.sh'}
     for name in names:
         local_file(task, name)
@@ -90,10 +92,53 @@ def scenario(task, archive=None):
     return {**record, 'definition': manifest}
 
 
+def required_checks(manifest):
+    """正常行为预期在修复前后保持一致；ID 只标识检查，不代表已覆盖 Issue。"""
+    if manifest.get('schema') != 2:
+        raise ValueError('修复闭环需要 schema 2 必需检查约定。')
+    items = manifest.get('required_checks')
+    if not isinstance(items, list) or not items:
+        raise ValueError('需要非空 required_checks。')
+    checks = {}
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError('required_checks 必须为对象列表。')
+        key = item.get('id')
+        if not isinstance(key, str) or not key.strip() or key in checks:
+            raise ValueError('必需检查 ID 为空或重复。')
+        if item.get('kind') not in ('target', 'regression') or not isinstance(item.get('expected'), str) or not item['expected'].strip():
+            raise ValueError('必需检查需要 kind=target/regression 和正常行为 expected。')
+        checks[key] = item
+    return checks
+
+
+def validate_checks(record):
+    """校验声明、实际执行和原始证据；通过不等于语义验收。"""
+    errors = []
+    try:
+        required = required_checks(record.get('scenario', {}).get('definition', {}))
+    except ValueError as exc:
+        return {'status': 'incomplete', 'errors': [str(exc)]}
+    artifacts = {a['path'] for a in record.get('evidence', {}).get('artifacts', []) if a.get('bytes', 0) > 0}
+    seen = set()
+    for item in record.get('checks', []):
+        key = item.get('id')
+        if not isinstance(key, str) or key not in required or key in seen:
+            errors.append('检查 ID 缺失、重复或未声明：' + str(key))
+            continue
+        seen.add(key)
+        if item.get('status') not in ('passed', 'failed'):
+            errors.append('检查未执行或无法判断：' + key)
+        if not item.get('evidence') or any(p not in artifacts for p in item['evidence']):
+            errors.append('检查缺少有效原始证据：' + key)
+    errors.extend('缺少必需检查：' + key for key in sorted(set(required) - seen))
+    return {'status': 'incomplete' if errors else 'complete', 'errors': errors}
+
+
 def read_observations(path):
     data = json.loads(path.read_text())
-    if not isinstance(data, dict) or data.get('schema') != 1:
-        raise ValueError('observations.json 必须是 schema: 1 的对象。')
+    if not isinstance(data, dict) or data.get('schema') not in (1, 2):
+        raise ValueError('observations.json 必须是 schema: 1 或 2 的对象。')
     for key in ('observations', 'checks', 'limitations'):
         if not isinstance(data.get(key), list):
             raise ValueError(f'observations.json 缺少 {key} 列表。')
@@ -154,6 +199,14 @@ def markdown(run, record):
     lines = ['# 场景运行记录', '', f'运行：{text(run.name)}', '',
              f'执行：**{text(execution["status"])}** — {text(execution["reason"])}', '',
              '评审：待人或 AI 根据原问题和证据判断；本报告不自动宣布复现或修复成功。', '']
+    validation = record.get('validation', {})
+    if validation:
+        lines += [f'检查完整性：{text(validation["status"])}', '']
+        lines += [f'- {text(error)}' for error in validation['errors']]
+    comparison = record.get('repair')
+    if comparison:
+        lines += ['', f'修复检查：{text(comparison["status"])}（仍需独立验收）', '']
+        lines += [f'- {text(error)}' for error in comparison.get('errors', [])]
     definition = record.get('scenario', {}).get('definition', {})
     if definition:
         lines += [f'场景：{text(definition["title"])}', '', f'数据条件：{text(definition["data"])}', '', '操作步骤：', '']
