@@ -7,9 +7,16 @@ import commandTimeout from '../src/command_timeout.mjs';
 
 let handler;
 commandTimeout({on: (event, fn) => { assert.equal(event, 'tool_call'); handler = fn; }});
-for (const [requested, expected] of [[undefined,120],[0,120],[-1,120],[Infinity,120],[300,300],[99999,600],[0.2,0.2]]) {
+for (const [requested, expected] of [[undefined,600],[0,600],[-1,600],[Infinity,600],[300,300],[99999,600],[0.2,0.2]]) {
   const event = {toolName:'bash',input:{command:'sleep 30',timeout:requested}};
   handler(event); assert.equal(event.input.timeout,expected);
+}
+// 不解析 shell：直接调用、绝对路径、组合命令采用同一默认值。
+for (const command of ['bash run_scenario.sh', 'bash "/tmp/task space/run_scenario.sh"', 'cd repo && bash ../run_scenario.sh']) {
+  const event = {toolName:'bash',input:{command}};
+  handler(event);
+  assert.equal(event.input.timeout,600);
+  assert.ok(event.input.timeout > 300 + 30, '默认 bash 必须容纳场景和清理');
 }
 const other = {toolName:'read',input:{path:'a'}};
 handler(other); assert.equal(other.input.timeout,undefined);
@@ -37,7 +44,7 @@ if (process.env.PI_PACKAGE_PATH) {
     try {const stat=readFileSync(`/proc/${pid}/stat`,'utf8');alive=!stat.slice(stat.lastIndexOf(')')+2).startsWith('Z');} catch {}
     assert.equal(alive,false,'超时后子进程不应继续执行');
     const next={type:'tool_call',toolName:'bash',toolCallId:'after-timeout',input:{command:'printf recovered'}};
-    await runner.emitToolCall(next);assert.equal(next.input.timeout,120);
+    await runner.emitToolCall(next);assert.equal(next.input.timeout,600);
     const result=await tool.execute(next.toolCallId,next.input);
     assert.match(JSON.stringify(result),/recovered/);
     process.env.MAKE_BUG_DEADLINE_MS=String(Date.now()+200);

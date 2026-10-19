@@ -246,7 +246,7 @@ def run(args, pi_args):
         if not state['pi_version']:
             state['warnings'].append('Pi 版本未能确认。')
         shutil.copy2(task / 'command_timeout.mjs', run_dir / 'command_timeout.mjs')
-        state['command_timeout'] = {'default_seconds': 120, 'max_seconds': 600,
+        state['command_timeout'] = {'default_seconds': 600, 'max_seconds': 600,
                                     'extension_sha256': file_digest(run_dir / 'command_timeout.mjs')}
         snapshot(task, run_dir, 'initial')
         pre = execute([sys.executable, str(task / 'prepare_tools.py')], task=task, env=env, run=run_dir,

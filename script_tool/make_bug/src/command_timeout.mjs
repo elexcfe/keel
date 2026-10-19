@@ -1,6 +1,7 @@
 // Pi 1.0.4 tool_call 在校验后、执行前允许原地修改 input。
 // 无额外 npm 依赖；显式加载，不启用用户或项目扩展发现。
-export const DEFAULT_TIMEOUT = 120;
+// 外层留足场景默认 300 秒和清理空间；显式短超时仍有效。
+export const DEFAULT_TIMEOUT = 600;
 export const MAX_TIMEOUT = 600;
 
 export default function commandTimeout(pi) {

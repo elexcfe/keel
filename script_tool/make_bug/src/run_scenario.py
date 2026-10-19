@@ -19,6 +19,9 @@ import evidence
 import process_tree
 import prepare_tools
 
+# 在父 bash/报告收尾边界前结束测试，留时间回收进程并写出记录。
+FINALIZE_SECONDS = 30
+
 LAUNCHER = '''#!/usr/bin/env bash
 set -euo pipefail
 task_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -47,7 +50,7 @@ def run_once(task, timeout=300, reference=None):
     deadline = time.monotonic() + timeout
     if os.environ.get('MAKE_BUG_DEADLINE_MS'):
         remaining = (float(os.environ['MAKE_BUG_DEADLINE_MS']) - float(os.environ.get('MAKE_BUG_WRAP_UP_MS', '0'))) / 1000 - time.time()
-        deadline = min(deadline, time.monotonic() + max(0, remaining))
+        deadline = min(deadline, time.monotonic() + max(0, remaining - FINALIZE_SECONDS))
 
     def remaining():
         seconds = deadline - time.monotonic()
@@ -153,7 +156,7 @@ def run_once(task, timeout=300, reference=None):
 def main(task=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repeat', type=int, default=1, choices=range(1, 11), metavar='1..10')
-    parser.add_argument('--timeout', type=float, default=300, help='整轮场景总时限，同时受修复任务剩余时限约束')
+    parser.add_argument('--timeout', type=float, default=300, help='整次场景命令的执行预算，repeat 各轮共用，同时受父任务剩余时限约束')
     parser.add_argument('--reference', type=Path, help='外层已验收的复现参考；修复会话默认从环境读取')
     args = parser.parse_args()
     inherited = os.environ.get('MAKE_BUG_REPAIR_REFERENCE')
@@ -172,8 +175,10 @@ def main(task=None):
         except BlockingIOError:
             print('同一任务已有场景运行，请等待完成。', file=sys.stderr)
             return 2
+        deadline = time.monotonic() + args.timeout
         for _ in range(args.repeat):
-            _, record = run_once(task, args.timeout, reference=reference) if reference else run_once(task, args.timeout)
+            remaining = max(0, deadline - time.monotonic())
+            _, record = run_once(task, remaining, reference=reference) if reference else run_once(task, remaining)
             status = record['execution']['status']
             if status != 'completed':
                 return {'blocked': 2, 'error': 1, 'interrupted': 130}[status]

@@ -122,6 +122,7 @@ class RunnerTests(unittest.TestCase):
         self.assertTrue((run/'snapshots/initial/source.tar.gz').is_file())
         self.assertEqual((run/'command_timeout.mjs').read_bytes(), (SRC/'command_timeout.mjs').read_bytes())
         self.assertEqual(state['command_timeout']['max_seconds'],600)
+        self.assertEqual(state['command_timeout']['default_seconds'],600)
         phase=json.loads((run/'events/single.json').read_text())
         self.assertIn(str(run/'command_timeout.mjs'),phase['command'])
 

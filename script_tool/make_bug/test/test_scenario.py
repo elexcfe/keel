@@ -173,6 +173,13 @@ class ScenarioTests(unittest.TestCase):
             self.assertEqual(runner.main(self.task), 2)
             self.assertEqual(run.call_count, 3)
 
+    def test_repeat_shares_one_command_budget(self):
+        with patch.object(sys, 'argv', ['run_scenario.py', '--repeat', '3', '--timeout', '300']), \
+                patch.object(runner.time, 'monotonic', side_effect=[100, 100, 220, 350]), \
+                patch.object(runner, 'run_once', return_value=(None, {'execution': {'status': 'completed'}})) as run:
+            self.assertEqual(runner.main(self.task), 0)
+            self.assertEqual([call.args[1] for call in run.call_args_list], [300, 180, 50])
+
     def test_old_parameters_rejected(self):
         for flag in ('--baseline', '--prepare'):
             with patch.object(sys, 'argv', ['run_scenario.py', flag]), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as exc:

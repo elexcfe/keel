@@ -176,6 +176,37 @@ class RepairTests(unittest.TestCase):
             _, record = self.run_scene()
         self.assertEqual(record['execution']['status'], 'blocked')
 
+    def test_scenario_leaves_time_to_save_before_parent_bash_boundary(self):
+        observed = []
+        execute = run_scenario.execute
+        def capture(*args):
+            observed.append(args[-1])
+            return execute(*args)
+        with patch.dict(os.environ, {'MAKE_BUG_DEADLINE_MS': '1040000', 'MAKE_BUG_WRAP_UP_MS': '0'}), \
+                patch.object(run_scenario.time, 'time', return_value=1000), \
+                patch.object(run_scenario, 'execute', side_effect=capture):
+            _, record = self.run_scene()
+        # 父预算剩 40 秒，先留 30 秒；run_scene 本身 5 秒，因此此处只用 5 秒。
+        self.assertEqual(record['execution']['status'], 'completed')
+        self.assertTrue(all(0 < value <= 5 for value in observed))
+        with patch.dict(os.environ, {'MAKE_BUG_DEADLINE_MS': '1040000', 'MAKE_BUG_WRAP_UP_MS': '0'}), \
+                patch.object(run_scenario.time, 'time', return_value=1000), \
+                patch.object(run_scenario, 'execute', side_effect=capture), \
+                contextlib.redirect_stdout(io.StringIO()):
+            observed.clear()
+            _, record = run_scenario.run_once(self.task, 300)
+        self.assertEqual(record['execution']['status'], 'completed')
+        self.assertTrue(all(8 < value <= 10 for value in observed), observed)
+
+    def test_scenario_does_not_start_inside_finalization_window(self):
+        with patch.dict(os.environ, {'MAKE_BUG_DEADLINE_MS': '1020000', 'MAKE_BUG_WRAP_UP_MS': '0'}), \
+                patch.object(run_scenario.time, 'time', return_value=1000), \
+                patch.object(run_scenario, 'execute') as execute:
+            folder, record = self.run_scene()
+        execute.assert_not_called()
+        self.assertEqual(record['execution']['status'], 'blocked')
+        self.assertTrue((folder / 'record.json').exists())
+
     def install_runner(self):
         for path in [*SRC.glob('*.py'), SRC / 'command_timeout.mjs']:
             shutil.copy2(path, self.task / path.name)
@@ -195,7 +226,7 @@ class RepairTests(unittest.TestCase):
         fake = self.install_runner()
         runs = self.root / 'pi-runs'
         result = subprocess.run([sys.executable, str(self.task / 'run_pi.py'), '--purpose', 'repair',
-                                 '--reference', str(reference), '--runs-dir', str(runs), '--timeout', '20',
+                                 '--reference', str(reference), '--runs-dir', str(runs), '--timeout', '60',
                                  '--wrap-up', '1', *extra],
                                 env={**os.environ, 'PI_BIN': str(fake), 'FAKE_REPAIR_MODE': mode, 'MAKE_BUG_SKIP_DEPS': '1'},
                                 capture_output=True, text=True, timeout=30)
