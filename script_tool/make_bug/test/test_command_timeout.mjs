@@ -40,7 +40,24 @@ if (process.env.PI_PACKAGE_PATH) {
     await runner.emitToolCall(next);assert.equal(next.input.timeout,120);
     const result=await tool.execute(next.toolCallId,next.input);
     assert.match(JSON.stringify(result),/recovered/);
+    process.env.MAKE_BUG_DEADLINE_MS=String(Date.now()+200);
+    process.env.MAKE_BUG_WRAP_UP_MS='1000';
+    const blocked=await runner.emitToolCall({type:'tool_call',toolName:'bash',toolCallId:'wrap-up',input:{command:'true'}});
+    assert.equal(blocked.block,true);
+    delete process.env.MAKE_BUG_DEADLINE_MS; delete process.env.MAKE_BUG_WRAP_UP_MS;
     console.log('PASS: actual Pi extension loading, timeout, child cleanup, subsequent command');
   } finally {rmSync(root,{recursive:true,force:true});}
 }
 console.log('PASS: default timeout, explicit timeout, upper cap, invalid input, unrelated tools');
+
+process.env.MAKE_BUG_DEADLINE_MS = String(Date.now() + 3000);
+process.env.MAKE_BUG_WRAP_UP_MS = '1000';
+const bounded = {toolName:'bash', input:{command:'sleep 30', timeout:30}};
+handler(bounded);
+assert.ok(bounded.input.timeout > 0 && bounded.input.timeout <= 2);
+process.env.MAKE_BUG_DEADLINE_MS = String(Date.now() + 500);
+assert.equal(handler({toolName:'bash', input:{command:'true'}}).block, true);
+assert.equal(handler({toolName:'write', input:{path:'result/REPRO.md',content:'partial'}}), undefined);
+delete process.env.MAKE_BUG_DEADLINE_MS;
+delete process.env.MAKE_BUG_WRAP_UP_MS;
+console.log('PASS: budget boundary blocks bash and leaves report writing available');

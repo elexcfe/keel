@@ -15,6 +15,7 @@ import sys
 import time
 import uuid
 
+import delivery
 import process_tree
 from evidence import source_snapshot, file_digest
 from run_isolation import isolate
@@ -22,10 +23,6 @@ from session_stats import refresh, save
 
 INITIAL = '先读取 dependencies.json（运行 python3 dependency_inventory.py show，优先查看验证依赖和服务），再检查 result/logs/dependency-preparation.json；按 ENVIRONMENT.md 处理环境状态，再执行 TASK.md 中的复现任务。'
 BLOCKED_ARGS = {'--no-session', '--session', '--session-dir', '--session-id', '--continue', '-c', '--resume', '-r', '--fork', '--api-key', '--mode', '--system-prompt', '--append-system-prompt', '--extension', '-e'}
-
-
-def stop_group(process):
-    process_tree.stop(process)
 
 
 def execute(command, *, task, env, run, label, deadline, cost_limit=None, interactive=False):
@@ -42,11 +39,15 @@ def execute(command, *, task, env, run, label, deadline, cost_limit=None, intera
         save(run / 'current.json', result)
         return result
     process = None
+    scope = process_tree.Scope()
+    initial_delivery = delivery.inventory(task)
     try:
         with output.open('wb') as out, error.open('wb') as err, selectors.DefaultSelector() as selector:
             process = subprocess.Popen(command, cwd=task, env=env, start_new_session=True,
                                        stdout=None if interactive else subprocess.PIPE,
                                        stderr=None if interactive else subprocess.PIPE)
+            result['process'] = scope.register(process)
+            save(run / 'current.json', result)
             if not interactive:
                 selector.register(process.stdout, selectors.EVENT_READ, (out, sys.stdout))
                 selector.register(process.stderr, selectors.EVENT_READ, (err, sys.stderr))
@@ -55,15 +56,17 @@ def execute(command, *, task, env, run, label, deadline, cost_limit=None, intera
                 now = time.monotonic()
                 if now >= deadline:
                     result['status'] = 'timeout'
-                    stop_group(process)
+                    scope.stop(process)
                     break
                 if now >= next_metric:
+                    scope.owned()
+                    delivery.checkpoint(task, run, initial_delivery, result['status'])
                     metric = refresh(run)
                     save(run / 'live-metrics.json', metric)
                     save(run / 'current.json', {**result, 'elapsed_seconds': now - started})
                     if cost_limit is not None and metric['known_totals']['cost'] >= cost_limit:
                         result['status'] = 'cost_limit'
-                        stop_group(process)
+                        scope.stop(process)
                         break
                     next_metric = now + 2
                 for key, _ in selector.select(timeout=.1):
@@ -81,7 +84,7 @@ def execute(command, *, task, env, run, label, deadline, cost_limit=None, intera
                         terminal.write(data.decode(errors='replace'))
                         terminal.flush()
                 if process.poll() is not None:
-                    stop_group(process)
+                    scope.stop(process)
             code = process.wait()
             result.setdefault('exit_code', 124 if result['status'] == 'timeout' else 125 if result['status'] == 'cost_limit' else code)
             if result['status'] == 'running':
@@ -91,11 +94,13 @@ def execute(command, *, task, env, run, label, deadline, cost_limit=None, intera
         result['status'] = 'interrupted' if interrupted else 'error'
         result['exit_code'] = 130 if interrupted else 1
         if process:
-            stop_group(process)
+            scope.stop(process)
         raise
     finally:
         if process:
-            stop_group(process)
+            result['cleanup'] = scope.stop(process)
+            if result['cleanup']['status'] != 'completed' and result['status'] == 'completed':
+                result.update(status='error', exit_code=1, error='进程清理不完整')
             for stream in (process.stdout, process.stderr):
                 if stream:
                     stream.close()
@@ -103,6 +108,7 @@ def execute(command, *, task, env, run, label, deadline, cost_limit=None, intera
         result['ended_at'] = datetime.now(timezone.utc).isoformat()
         save(run / 'events' / (label + '.json'), result)
         save(run / 'current.json', result)
+        delivery.checkpoint(task, run, initial_delivery, result['status'])
     return result
 
 
@@ -170,6 +176,7 @@ def run(args, pi_args):
         (run_dir / folder).mkdir()
     started = time.monotonic()
     deadline = started + args.timeout
+    initial_delivery = delivery.inventory(task)
     state = {'schema': 1, 'workflow': args.workflow, 'pair_id': args.pair_id, 'task': str(task),
              'source_task': str(source), 'isolation': 'directory-copy' if args.isolate else 'existing-task',
              'started_at': datetime.now(timezone.utc).isoformat(), 'status': 'running', 'phases': [],
@@ -271,8 +278,14 @@ def run(args, pi_args):
             if not interactive:
                 command += ['--mode', 'json', '--print']
             command += pi_args + ['@' + str(task / 'BUG.md'), initial]
+            stage_deadline = min(deadline, time.monotonic() + args.prepare_timeout) if stage == 'prepare' else deadline
+            remaining = max(0, stage_deadline - time.monotonic())
+            reserve = min(args.wrap_up, remaining / 6)
+            env['MAKE_BUG_DEADLINE_MS'] = str((time.time() + remaining) * 1000)
+            env['MAKE_BUG_WRAP_UP_MS'] = str(reserve * 1000)
+            state['wrap_up_seconds'] = reserve
             phase = execute(command, task=task, env=env, run=run_dir, label=stage,
-                            deadline=min(deadline, time.monotonic() + args.prepare_timeout) if stage == 'prepare' else deadline,
+                            deadline=stage_deadline,
                             cost_limit=args.cost_limit, interactive=interactive)
             state['phases'].append(phase)
             state['elapsed_seconds'] = time.monotonic() - started
@@ -299,6 +312,7 @@ def run(args, pi_args):
         state['exit_code'] = code
         state['ended_at'] = datetime.now(timezone.utc).isoformat()
         save(run_dir / 'run.json', state)
+        state['delivery'] = delivery.checkpoint(task, run_dir, initial_delivery, state['status'])
         snapshot(task, run_dir, 'final')
         state['elapsed_seconds'] = time.monotonic() - started
         state['ended_at'] = datetime.now(timezone.utc).isoformat()
@@ -307,7 +321,7 @@ def run(args, pi_args):
         expected = ('single',) if args.workflow == 'single' else ('prepare', 'reproduce')
         state['monitoring'] = 'complete' if all(metrics['phases'].get(p, {}).get('totals', {}).get(key) is not None for p in expected for key in metrics['totals']) and not metrics['warnings'] else 'incomplete'
         save(run_dir / 'run.json', state)
-        (run_dir / 'REPORT.md').write_text(f"# Pi 运行记录\n\n方式：{args.workflow}；执行：{state['status']}；监测：{state['monitoring']}。\n\n耗时：{state['elapsed_seconds']:.2f}s；估算费用：{metrics['totals']['cost']}（null/None 表示未知）。\n\nBug 验收待完成，进程成功不代表已复现。查看 run.json、metrics.json、tools.json 和 sessions/ 原始记录。\n")
+        (run_dir / 'REPORT.md').write_text(f"# Pi 运行记录\n\n方式：{args.workflow}；执行：{state['status']}；监测：{state['monitoring']}。\n\n耗时：{state['elapsed_seconds']:.2f}s；估算费用：{metrics['totals']['cost']}（null/None 表示未知）。\n\nBug 验收待完成，进程成功不代表已复现。查看 DELIVERY.md、delivery.json、run.json、metrics.json 和 sessions/ 原始记录。\n")
         if task_lock:
             task_lock.close()
         print(f'运行结束，记录：{run_dir}', file=sys.stderr)
@@ -321,13 +335,14 @@ def main():
     parser.add_argument('--isolate', type=Path, help='新建隔离副本，要求模板仓库干净')
     parser.add_argument('--cache-seed', type=Path, help='复制下载缓存种子，不复制已安装依赖')
     parser.add_argument('--timeout', type=float, default=3600)
+    parser.add_argument('--wrap-up', type=float, default=600, help='收尾预留秒数，上限为阶段剩余时间的六分之一；收尾禁用 bash，使用 read/edit/write 交付')
     parser.add_argument('--prepare-timeout', type=float, default=900)
     parser.add_argument('--cost-limit', type=float, help='已记录估算费用软上限；可能有延迟/缺失')
     parser.add_argument('--pair-id', help='实验配对标识，不改变执行行为')
     args, rest = parser.parse_known_args()
     if rest[:1] == ['--']:
         rest = rest[1:]
-    for value in (args.timeout, args.prepare_timeout, args.cost_limit):
+    for value in (args.timeout, args.prepare_timeout, args.cost_limit, args.wrap_up):
         if value is not None and (not math.isfinite(value) or value <= 0):
             parser.error('预算必须为有限正数')
     def interrupted(signum, frame):

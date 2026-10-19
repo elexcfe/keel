@@ -220,6 +220,23 @@ class ScenarioTests(unittest.TestCase):
                 self.assertEqual(runner.main(self.task), 2)
                 run.assert_not_called()
 
+    def test_detached_child_cleaned_without_killing_borrowed_service(self):
+        import time
+        borrowed = subprocess.Popen(['sleep', '30'])
+        try:
+            (self.task / 'scenario/run.sh').write_text('setsid sleep 30 > /dev/null 2>&1 &\necho $! > child.pid\nsleep 0.1\nexit 9\n')
+            _, record = self.run_once()
+            pid = int((self.task / 'child.pid').read_text())
+            path = Path(f'/proc/{pid}/stat')
+            alive = path.exists() and path.read_text().split()[2] != 'Z'
+            self.assertFalse(alive, '脱离进程组的本任务子进程仍在运行')
+            self.assertIsNone(borrowed.poll(), '借用服务被误杀')
+        finally:
+            borrowed.terminate(); borrowed.wait()
+            if (self.task / 'child.pid').exists():
+                try: os.kill(int((self.task / 'child.pid').read_text()), 15)
+                except ProcessLookupError: pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

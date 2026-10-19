@@ -150,6 +150,11 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(result.returncode,124,result.stderr)
         _,state,_=self.result()
         self.assertEqual(state['status'],'timeout')
+        run = next(self.runs.iterdir())
+        delivery = json.loads((run/'delivery.json').read_text())
+        self.assertEqual(delivery['execution'], 'timeout')
+        self.assertIn('result/REPRO.md', delivery['missing'])
+        self.assertTrue((run/'DELIVERY.md').is_file())
         pid=int((self.task/'child.pid').read_text())
         stat=Path(f'/proc/{pid}/stat')
         if stat.exists():

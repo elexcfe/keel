@@ -2,6 +2,10 @@
 
 输入 GitHub Issue 链接，生成问题描述、Agent 要求、指定版本的代码，以及 pi 启动脚本。不改动现有仓库，不覆盖已生成任务。
 
+## 产出与验收分工
+
+Pi 负责具体任务的场景脚本、测试数据恢复方法、观察和断言逻辑、截图/视频采集及复现报告。Keel 提供通用提示、运行器、进程清理、时间预算与交付检查；人或独立验收 AI 负责重跑、核查材料和判断结论。发现产物缺陷时，改进通用提示/生成/校验逻辑，再交由 Pi 重新产出；验收者不修补某次产物来取得通过。Pi 的自述和文件齐全均不能替代外层验收。
+
 ## 快速运行
 
 以下命令在 **Keel 仓库根目录** 执行。先按现有任务或新任务选择入口，不需要重新生成已有任务。
@@ -13,21 +17,18 @@
 | 从 GitHub Issue 创建新任务 | `src/make_bug.py`，仅准备材料与代码，之后再启动 Pi |
 | 更新旧任务的工具 | `src/update_task.py`，更新工具不等于迁移完成场景 |
 
-### 直接运行当前 Actual 示例
+### 独立验收 Pi 已交付的场景
 
-本机 Actual #8351 已迁移，可直接执行：
-
-```bash
-bash script_tool/make_bug/output/actualbudget-actual-8351/task/run_scenario.sh
-```
-
-需要重复观察时执行：
+将下列路径替换为 Pi 已交付场景的任务目录；场景缺失时先交由 Pi 产出，验收者不补写脚本或数据。
 
 ```bash
-bash script_tool/make_bug/output/actualbudget-actual-8351/task/run_scenario.sh --repeat 3 --timeout 300
+bash /absolute/path/to/task/run_scenario.sh
+bash /absolute/path/to/task/run_scenario.sh --repeat 3 --timeout 300
 ```
 
-`--timeout` 是环境检查、场景执行各自的超时秒数；`--repeat` 为 1–10 次，执行阻塞或出错时停止后续轮次。该示例的代码、依赖与场景位于被忽略的 output/，**新克隆的仓库不会自带它们**；没有这个目录时，按下一节创建任务。
+`--timeout` 是环境检查、场景执行各自的超时秒数；`--repeat` 为 1–10 次，执行阻塞或出错时停止后续轮次。场景执行与证据完整性、目标异常是否成立分开验收。缺少必需证据时记录部分完成或受阻，不由验收者补齐后再计为 Pi 成功。
+
+本机 Actual #8351 的人工修订场景只作诊断材料，不是正式资源或 Pi 独立交付示例。新克隆不会携带本地诊断文件；后续 Pi 验证应创建干净任务，不复用人工场景作为输入。来源及历史运行归属见“人工诊断材料”。
 
 ### 从新 Issue 开始
 
@@ -487,3 +488,17 @@ node script_tool/make_bug/test/test_command_timeout.mjs
 PI_PACKAGE_PATH=/home/elexcfe/.local/lib/node-v24/lib/node_modules/@earendil-works/pi-coding-agent \
   node script_tool/make_bug/test/test_command_timeout.mjs
 ```
+
+### 收尾与进程清理
+
+监测入口默认预留最多 600 秒收尾（不超过进入该阶段时剩余时间的六分之一），可用 `--wrap-up` 设置正数。时间来自启动器；Pi 的 bash 时限被压到收尾边界，进入收尾后禁止新 bash，仍可用 read/edit/write 保存报告或环境交接。该限制不理解命令语义，因此收尾期间也不能用 bash 整理文件，应提前逐轮保存材料。它是工具边界约束，不是 OS 安全沙箱；未验证模型一定按要求完成报告。
+
+`delivery.json` / `DELIVERY.md` 持续列出必需文件、失效本地链接、未更新旧报告和已有场景记录；`REPRO.partial.md` 保存最近读取的报告文本，不创建虚假的成功结论。最终 `run.json` 单列 delivery，review 仍为 pending。已有场景记录可能包含历史轮次，需按 run_id 核查。费用上限、外部强杀与模型中断可能提前结束收尾，已有检查点保留；SIGKILL 或宿主机故障无法保证执行最后清理。
+
+Pi 与场景执行器在 Linux/WSL 使用同一回收机制：启动前保护已有子进程，启动后回收本阶段进程树及被收养的孤儿，使用 PID 与启动时间复核身份。正常退出、失败、超时和 SIGTERM 均记录清理结果；场景日志旁的 `*.cleanup.json` 与最终 record.json 可核查。每个运行器串行执行阶段，不支持同一 Python 进程并发运行多个清理范围。外部已有服务不按名称或端口查杀。
+
+### 人工诊断材料
+
+2026-10-19 的 Actual 场景、固定账本及观察逻辑由开发 Keel 的 Codex 人工修订，不是 Pi 独立产出。它们已移出正式资源，仅保留在被忽略的 `output/diagnostics/manual-actual-8351-20261019/scenario/`；同目录 `PROVENANCE.json` 记录文件摘要、人工介入和关联任务路径。原任务与独立副本内的人工场景、报告及运行证据也仅作诊断保留，不改写原始材料，不计入 Pi 成功率，不回填历史 A/B 成功。
+
+这些运行只能说明人工场景可以捕捉异常、公共执行器可以保存材料，不能证明 Pi 的场景生成或证据交付能力已提升。后续应改进通用要求与验收，再由 Pi 在干净任务中重新产出；本轮不启动新的付费实验。

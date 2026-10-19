@@ -3,6 +3,7 @@
 import argparse
 from datetime import datetime, timezone
 import fcntl
+import json
 import os
 from pathlib import Path
 import platform
@@ -10,9 +11,9 @@ import signal
 import subprocess
 import sys
 import tempfile
-import time
 
 import evidence
+import process_tree
 import prepare_tools
 
 LAUNCHER = '''#!/usr/bin/env bash
@@ -29,32 +30,14 @@ def now():
 def execute(task, script, env, log, timeout):
     # env.sh 每次由新 shell 加载；check.sh 只检查，run.sh 才执行测试。
     command = ['bash', '-c', 'set -euo pipefail; source "$MAKE_BUG_TASK/scenario/env.sh"; exec bash "$1"', 'scenario', str(script)]
+    scope = process_tree.Scope()
     with log.open('w') as stream:
         process = subprocess.Popen(command, cwd=task, env=env, stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
+        evidence.save(log.with_suffix('.process.json'), scope.register(process))
         try:
             return process.wait(timeout=timeout)
         finally:
-            # 只清理本次进程组，不按端口或进程名杀其他服务。
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            try:
-                process.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                pass
-            deadline = time.monotonic() + 3
-            while time.monotonic() < deadline:
-                try:
-                    os.killpg(process.pid, 0)
-                except ProcessLookupError:
-                    break
-                time.sleep(0.05)
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            process.wait()
+            evidence.save(log.with_suffix('.cleanup.json'), scope.stop(process))
 
 
 def run_once(task, timeout=300):
@@ -120,6 +103,17 @@ def run_once(task, timeout=300):
                 record['integrity_warnings'].append(f'运行期间 {key} 发生变化，本轮不可直接用于前后对照。')
         except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as exc:
             record['integrity_warnings'].append(f'无法复核 {key}：{exc}')
+    record['cleanup'] = {}
+    for cleanup in (run / 'logs').glob('*.cleanup.json'):
+        try:
+            value = json.loads(cleanup.read_text())
+            record['cleanup'][cleanup.name] = value
+            if value['status'] != 'completed':
+                record['integrity_warnings'].append('进程清理不完整：' + cleanup.name)
+                if record['execution']['status'] == 'completed':
+                    record['execution'] = {'status': 'error', 'reason': '进程清理不完整', 'phase': 'cleanup'}
+        except (OSError, ValueError, KeyError) as exc:
+            record['integrity_warnings'].append('无法读取清理记录：' + str(exc))
     record['evidence'] = evidence.collect_evidence(run, observation_data)
     record['finished_at'] = now()
     evidence.save(run / 'record.json', record)
@@ -135,6 +129,9 @@ def main(task=None):
     args = parser.parse_args()
     if not 0 < args.timeout < float('inf'):
         parser.error('--timeout 必须为有限正数')
+    def interrupted(signum, frame):
+        raise KeyboardInterrupt()
+    signal.signal(signal.SIGTERM, interrupted)
     task = (task or Path(__file__).resolve().parent).resolve()
     with (task / '.scenario.lock').open('a') as lock:
         try:
