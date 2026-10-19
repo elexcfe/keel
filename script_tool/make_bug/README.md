@@ -407,7 +407,7 @@ bash /path/to/task/run_scenario.sh --repeat 3 --timeout 300
 
 执行状态为 completed / blocked / error / interrupted，分别返回 0 / 2 / 1 / 130。**退出 0 只表示执行并交付了有效结构的记录，不代表 Bug 不存在，也不保证视频或检查内容正确。** 检查结果 passed / failed / inconclusive 单独保存；证据缺失和执行期间文件变化单独列为警告。重复执行遇到非 completed 停止，不对多轮自动宣称稳定。
 
-修改场景后可以直接重跑，新轮次保留新版本，旧记录不覆盖。人或 AI 在 result/REPRO.md 写评审，引用运行 ID、视频/事件时间点和文件；原始记录不随评审改写。参考轮次由评审选择。本阶段没有自动修复、两轮对照生成器或 AI 视频判断器。
+修改场景后可以直接重跑，新轮次保留新版本，旧记录不覆盖。Pi 在 result/REPRO.md 交付复现报告；人或独立验收 AI 将评审另存于监测目录 review.json 或 Issue，引用运行 ID、视频/事件时间点和文件，不覆盖 Pi 报告及原始记录。参考轮次由评审选择。本阶段没有自动修复、两轮对照生成器或 AI 视频判断器。
 
 ## Pi 运行监测（默认开启）
 
