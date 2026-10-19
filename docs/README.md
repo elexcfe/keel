@@ -28,7 +28,7 @@ Keel 的目标是加快人与 AI 的协作效率，减少反复解释、等待�
 - [Pi 运行监测](../plans/pi-run-monitoring.md)：Issue #7 的实现与验证。
 - [统一依赖清单](../plans/dependency-inventory.md)：Issue #5 的清单格式、接入与验证。
 - [场景运行与证据交付](../plans/scenario-evidence.md)：Issue #4 的替换步骤、检查方法与实际验收。
-- [最小修复闭环](../plans/repair-loop.md)：Issue #9 的同会话修复边界、离线验收与单次 Actual 验证记录；本次准入未通过，修复效果仍待验证。
+- [最小修复闭环](../plans/repair-loop.md)：Issue #9 的同会话修复边界、离线验收与单次 Actual 验证记录；共享预算继续后，两条 Actual 路径在外层反馈下完成修复验收；首次交付与报告效率仍有缺口。
 - [Pi 接入方案调整](../plans/pi-integration-docs.md)：Issue #3 的文档修改步骤和检查方法。
 
 新增、改名、移动或删除资料时，更新这里的链接和说明。文档有了替代版本，也在这里说明，避免继续按旧方案开发。
