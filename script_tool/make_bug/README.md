@@ -275,7 +275,7 @@ python3 dependency_inventory.py record --category verification \
 
 `prepare_deps.py` 自动记录 Node 实际安装包（含 workspace、嵌套包、pnpm 和可读取的 Yarn PnP）、Node 和包管理器版本。`setup_tools.py` 自动记录 Playwright 及其 Chromium；直接运行源码预装时先存到共享目录的 `dependencies.json`，任务启动时导入到自己的清单。安装失败不会标为就绪；盘点失败可查看清单的 `preparations.project.warnings`。其他语言、系统库和 Pi 自行安装的工具由 Pi 逐项登记，不声称自动捕获所有 shell 安装行为。清单更新加锁并原子写入，同名不同安装路径分别保留。
 
-新任务自带清单和记录工具；旧任务先按上文运行 `update_task.py`，再执行盘点命令即可。升级保留已有清单和自定义 TASK.md；ENVIRONMENT.md 会更新为新的统一记录要求。清单在已忽略的任务输出目录内，不应提交到 Keel 源码仓库。
+新任务自带清单和记录工具；旧任务先按上文运行 `update_task.py`，再执行盘点命令即可。升级逐字保留已有 dependencies.json（不刷新时间戳），仅缺失时初始化；保留自定义 TASK.md；ENVIRONMENT.md 会更新为新的统一记录要求。清单在已忽略的任务输出目录内，不应提交到 Keel 源码仓库。
 
 启动器先运行 `prepare_tools.py`，创建目录，将共享工具登记到 `dependencies.json`，另将目录和环境变量写入 `result/logs/tools.json`，然后准备项目依赖、启动 pi。它设置 `MAKE_BUG_SHARED_TOOLS`、`MAKE_BUG_TASK_TOOLS`、`PLAYWRIGHT_BROWSERS_PATH`、`PUPPETEER_CACHE_DIR`、`npm_config_cache`、`PIP_CACHE_DIR`，共享工具和项目自己的浏览器安装器都使用这些路径。Playwright 缓存关闭自动旧版本回收，避免任务之间清掉彼此需要的 revision；长期不用的版本由准备者检查后清理。目录存在不等于工具已安装或能启动。
 

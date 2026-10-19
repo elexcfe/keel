@@ -15,7 +15,9 @@ def update(task):
     for name in ('repo', 'TASK.md', 'BUG.md', 'deps-config.json', 'tools-config.json'):
         if not (task / name).exists():
             raise ValueError(f'不是完整任务目录，缺少 {name}：{task}')
-    initialize_inventory(task)
+    # 更新通用运行器不重写已有 Pi 依赖记录；旧任务缺失时才初始化。
+    if not (task / 'dependencies.json').exists():
+        initialize_inventory(task)
     replacements = {
         name: (TOOL_ROOT / 'src' / name).read_bytes()
         for name in ('repair.py', 'command_timeout.mjs', 'process_tree.py', 'delivery.py', 'run_pi.py', 'run_isolation.py', 'session_stats.py', 'dependency_inventory.py', 'prepare_deps.py', 'prepare_tools.py', 'setup_tools.py', 'run_scenario.py', 'evidence.py', 'progress.py')
