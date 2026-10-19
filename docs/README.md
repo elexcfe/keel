@@ -19,6 +19,7 @@ Keel 的目标是加快人与 AI 的协作效率，减少反复解释、等待�
 | 怎样修改 pi 的 Bug 复现要求 | [复现提示词模板](../script_tool/make_bug/resource/prompts/reproduce.md) | 修改后影响新生成的 TASK.md；已有任务可单独编辑自己的 TASK.md |
 | pi 怎样自主补齐依赖、选择缓存并恢复环境 | [环境恢复要求](../script_tool/make_bug/resource/prompts/environment.md) | 与任务要求一起传入 pi，按用途查看 dependencies.json，优先检查验证依赖和服务，补装后分类登记；区分环境失败和目标 Bug |
 | 怎样交付可重跑场景与行为证据 | [场景交付要求](../script_tool/make_bug/resource/prompts/scenario.md) | Pi 产出具体场景与报告，外层独立验收；记录代码快照及原始材料 |
+| 怎样识别报告滞后、限时核对视频 | [报告更新与过期检测](../script_tool/make_bug/README.md#收尾与进程清理)、[限时视频检查](../script_tool/make_bug/README.md#限时视频检查) | 提醒 Pi 更新，过期不硬拦 bash；视频工具只校验来源与时间，不代写分析或替代语义验收 |
 | 后续可能增加什么能力 | [代码仓知识与 Bug 检索构想](enhancements/repository-memory.md) | 待核心能力完成后推进，当前只做记录 |
 
 ## 文档维护记录

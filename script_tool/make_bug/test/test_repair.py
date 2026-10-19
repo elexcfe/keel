@@ -117,6 +117,20 @@ class RepairTests(unittest.TestCase):
             self.assertEqual(record['repair']['baseline_run'], baseline['run_id'])
         self.assertEqual(len(list((self.task / 'result/runs').iterdir())), 4)
 
+    def test_repair_reminder_targets_fix_and_preserves_repro(self):
+        reference, _ = self.reference()
+        repro = self.task / 'result/REPRO.md'
+        repro.write_text('original synthetic reproduction report')
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            _, record = run_scenario.run_once(self.task, 5, reference=reference)
+        summary = json.loads(output.getvalue().splitlines()[-1])
+        self.assertEqual(summary['report_update']['report'], 'result/FIX.md')
+        self.assertEqual(summary['report_update']['run_id'], record['run_id'])
+        self.assertEqual(record['repair']['status'], 'checks_failed')
+        self.assertEqual(repro.read_text(), 'original synthetic reproduction report')
+        self.assertFalse((self.task / 'result/FIX.md').exists())
+
     def test_changed_scene_blocked_before_execution(self):
         reference, _ = self.reference()
         script = self.task / 'scenario/run.sh'

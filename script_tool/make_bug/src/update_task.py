@@ -20,7 +20,7 @@ def update(task):
         initialize_inventory(task)
     replacements = {
         name: (TOOL_ROOT / 'src' / name).read_bytes()
-        for name in ('repair.py', 'command_timeout.mjs', 'process_tree.py', 'delivery.py', 'run_pi.py', 'run_isolation.py', 'session_stats.py', 'dependency_inventory.py', 'prepare_deps.py', 'prepare_tools.py', 'setup_tools.py', 'run_scenario.py', 'evidence.py', 'progress.py')
+        for name in ('repair.py', 'command_timeout.mjs', 'process_tree.py', 'delivery.py', 'run_pi.py', 'run_isolation.py', 'session_stats.py', 'dependency_inventory.py', 'prepare_deps.py', 'prepare_tools.py', 'setup_tools.py', 'run_scenario.py', 'evidence.py', 'progress.py', 'video_evidence.py')
     }
     (task / 'scenario').mkdir(exist_ok=True)
     replacements['run_scenario.sh'] = SCENARIO_LAUNCHER.encode()

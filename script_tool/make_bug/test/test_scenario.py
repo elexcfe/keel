@@ -97,6 +97,21 @@ class ScenarioTests(unittest.TestCase):
         self.assertIn('missing-browser', (run / 'logs/check.log').read_text())
         self.assertTrue((run / 'REPORT.md').exists())
 
+    def test_each_finished_run_requests_partial_report_without_writing_it(self):
+        for blocked in (False, True):
+            with self.subTest(blocked=blocked):
+                if blocked:
+                    (self.task / 'scenario/check.sh').write_text('exit 1\n')
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    _, record = runner.run_once(self.task, 5)
+                self.assertIn('先更新', output.getvalue())
+                summary = json.loads(output.getvalue().splitlines()[-1])
+                self.assertEqual(summary['report_update']['run_id'], record['run_id'])
+                self.assertEqual(summary['report_update']['report'], 'result/REPRO.md')
+                self.assertIn('尚未确认', summary['report_update']['instruction'])
+                self.assertFalse((self.task / 'result/REPRO.md').exists())
+
     def test_error_retains_partial_observations(self):
         p = self.task / 'scenario/run.sh'
         p.write_text(p.read_text().replace('exit 0', 'exit 9'))

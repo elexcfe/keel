@@ -539,9 +539,30 @@ PI_PACKAGE_PATH=/home/elexcfe/.local/lib/node-v24/lib/node_modules/@earendil-wor
 
 监测入口默认预留最多 600 秒收尾（不超过进入该阶段时剩余时间的六分之一），可用 `--wrap-up` 设置正数。时间来自启动器；Pi 的 bash 时限被压到收尾边界，进入收尾后禁止新 bash，仍可用 read/edit/write 保存报告或环境交接。该限制不理解命令语义，因此收尾期间也不能用 bash 整理文件，应提前逐轮保存材料。它是工具边界约束，不是 OS 安全沙箱；未验证模型一定按要求完成报告。
 
-`delivery.json` / `DELIVERY.md` 持续列出必需文件、失效本地链接、未更新旧报告和已有场景记录；`REPRO.partial.md` 保存最近读取的报告文本，不创建虚假的成功结论。最终 `run.json` 单列 delivery，review 仍为 pending。已有场景记录可能包含历史轮次，需按 run_id 核查。费用上限、外部强杀与模型中断可能提前结束收尾，已有检查点保留；SIGKILL 或宿主机故障无法保证执行最后清理。
+`delivery.json` / `DELIVERY.md` 持续列出必需文件、失效本地链接、未更新旧报告和已有场景记录；`REPRO.partial.md`（修复时为 `FIX.partial.md`）保存最近读取的报告文本，不创建虚假的成功结论。最终 `run.json` 单列 delivery，review 仍为 pending。已有场景记录可能包含历史轮次，需按 run_id 核查。费用上限、外部强杀与模型中断可能提前结束收尾，已有检查点保留；SIGKILL 或宿主机故障无法保证执行最后清理。
+
+每轮场景结束后，终端和最后的 JSON 摘要 `report_update` 都提醒 Pi 先更新短报告：当前结论、最新运行编号、证据位置、未确认项。失败或阻塞同样提醒。Pi 可以先写“检查通过，视频尚未核对”，再继续分析；运行器不代写 REPRO/FIX。外层验收尽量一次汇总事实错误、缺失证据和必要修改，纯文字纠正只需读写编辑工具，不为此自动另开会话或重跑场景。
+
+使用 `--repeat` 时，Pi 要等整条命令返回后才能更新报告，应汇总各轮并引用最后一轮；提醒不会在命令内部暂停场景或另启会话。
+
+`delivery.json.report_freshness` 按最新 `finished_at`（含失败/阻塞轮次）对比报告修改时间和运行编号，区分 `missing`、`no_completed_run`、`unknown`、`stale`、`current`。记录最新轮次、报告 SHA/更新时间及 `update_delay_seconds`。这个差值是**当前报告版本**距场景结束的时间，后续编辑会改变，不是首次更新延迟。坏记录、缺时区或未来时间标为 unknown；尚无 finished_at 的活动记录暂不参与。过期或无法确认时交付标为 incomplete，但不会阻断 bash；已有总预算/收尾限制不变。current 仅说明报告在该轮结束后更新且包含该轮编号，不能证明文字正确或最终验收通过。
 
 Pi 与场景执行器在 Linux/WSL 使用同一回收机制：启动前保护已有子进程，启动后回收本阶段进程树及被收养的孤儿，使用 PID 与启动时间复核身份。正常退出、失败、超时和 SIGTERM 均记录清理结果；场景日志旁的 `*.cleanup.json` 与最终 record.json 可核查。每个运行器串行执行阶段，不支持同一 Python 进程并发运行多个清理范围。外部已有服务不按名称或端口查杀。
+
+### 限时视频检查
+
+新任务携带 `video_evidence.py`；已有任务通过前述 update_task.py 升级后才会获得它。工具依赖本机 PATH 中的 ffmpeg、ffprobe，不自动下载安装。先检查时长，再按需取少量关键帧，例如在任务目录运行：
+
+```bash
+python3 video_evidence.py result/runs/<run_id>/videos/example.webm
+python3 video_evidence.py result/runs/<run_id>/videos/example.webm --at 1.2 1.5 1.8
+```
+
+上例时间仅示意；实际必须用相对视频起点的秒数，不能传页面 performance.now 或帧序号。工具拒绝负数、非有限数、超过时长的引用，单次最多 8 个观察点。`--timeout` 默认 60 秒、最大 120 秒，探测和所有取帧共用时限，还受父任务报告收尾边界约束。正式场景仍采用 bash 600 秒、场景 300 秒默认值，不能把辅助工具短超时套到正式验证。
+
+默认输出到当前目录的 result/video-evidence-随机值/；`--output` 可指定不存在的新目录。evidence.json 保存来源摘要、视频时长、请求时间、成功帧与失败/超时原因，日志保留；失败时不会删除此前成功材料，不覆盖原视频或已有输出。派生材料不要写进已封存场景目录。清理和最终落盘可能有少量额外耗时，执行时限不是磁盘故障下的绝对墙钟保证。
+
+时间和来源检查不能证明画面含义；取帧请求时间也不自动等于动作时刻。瞬间 Bug 仍可由原始视频证明，截图只是辅助。工具失败后应先记录缺口，不为了拼图反复编写长时间分析脚本。离线测试只证明工具机制，不计作 Pi 自主交付成功。
 
 ### 人工诊断材料
 

@@ -146,10 +146,18 @@ def run_once(task, timeout=300, reference=None):
     evidence.save(run / 'record.json', record)
     evidence.markdown(run, record)
     print(f'{record["execution"]["status"]}：{record["execution"]["reason"]}\n报告：{run / "REPORT.md"}', flush=True)
+    report_name = 'result/FIX.md' if reference else 'result/REPRO.md'
+    reminder = {
+        'report': report_name, 'run_id': record['run_id'],
+        'instruction': f'先更新 {report_name} 的短报告：当前结论、最新运行编号、证据位置、尚未确认项。'
+                       '失败或阻塞也应如实记录；检查确已通过时可先写“检查通过，视频尚未核对”，再继续诊断或辅助分析。'
+                       '报告由 Pi 撰写，运行器不会代写；此提醒不阻断后续命令。',
+    }
+    print(reminder['instruction'], flush=True)
     print(json.dumps({'run_id': record['run_id'], 'checks': [
         {'id': c.get('id', c.get('name')), 'status': c['status']} for c in record['checks']],
         'validation': record['validation'], 'repair': record.get('repair'),
-        'record': str(run / 'record.json')}, ensure_ascii=False), flush=True)
+        'record': str(run / 'record.json'), 'report_update': reminder}, ensure_ascii=False), flush=True)
     return run, record
 
 

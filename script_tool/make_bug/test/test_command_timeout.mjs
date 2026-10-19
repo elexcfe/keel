@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {mkdtempSync, readFileSync, rmSync} from 'node:fs';
+import {mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -43,8 +43,16 @@ if (process.env.PI_PACKAGE_PATH) {
     let alive=false;
     try {const stat=readFileSync(`/proc/${pid}/stat`,'utf8');alive=!stat.slice(stat.lastIndexOf(')')+2).startsWith('Z');} catch {}
     assert.equal(alive,false,'超时后子进程不应继续执行');
+    // 即使最新场景尚未写入报告，也允许在原会话继续诊断。
+    mkdirSync(join(root,'result/runs/run-offline-latest'),{recursive:true});
+    writeFileSync(join(root,'result/REPRO.md'),'仅提及 run-offline-old，视频尚未核对');
+    writeFileSync(join(root,'result/runs/run-offline-latest/record.json'),JSON.stringify({
+      run_id:'run-offline-latest',finished_at:new Date().toISOString(),execution:{status:'error'}
+    }));
     const next={type:'tool_call',toolName:'bash',toolCallId:'after-timeout',input:{command:'printf recovered'}};
-    await runner.emitToolCall(next);assert.equal(next.input.timeout,600);
+    const allowed=await runner.emitToolCall(next);
+    assert.notEqual(allowed?.block,true,'报告过期不能硬拦 bash');
+    assert.equal(next.input.timeout,600);
     const result=await tool.execute(next.toolCallId,next.input);
     assert.match(JSON.stringify(result),/recovered/);
     process.env.MAKE_BUG_DEADLINE_MS=String(Date.now()+200);
