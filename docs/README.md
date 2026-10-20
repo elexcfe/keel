@@ -9,7 +9,7 @@ Keel 的目标是加快人与 AI 的协作效率，减少反复解释、等待�
 | 怎样提出开发任务、跟踪进度和关闭任务 | [Issues 工作流](issues-workflow.md) | GitHub Issue 管任务状态，执行计划管实施细节 |
 | 产品给谁用、为什么这样做、还有哪些设想 | [产品说明](keel-product-brief.md) | 围绕现有编码 Agent，改善正确交付与人工核查；评审自动化和降本尚待验证 |
 | 怎样实现、分几步做、如何验收和处理风险 | [项目计划](keel-project-plan.md) | 回放评审→有限反馈→原始 Issue 对照→按需 Skill/CI；不沿用未测量的工期和指标 |
-| 下一项任务是什么、怎样验收 | [复现评审回放原型](../plans/reproduction-review-replay.md) | 只读冻结材料，给有依据的评审建议并分析误判；当前仅登记，不开发、不调用模型 |
+| 下一项任务是什么、怎样验收 | [复现评审回放原型](../plans/reproduction-review-replay.md) | 最小只读入口与离线协议；模型调用和误判/成本评价尚未启动 |
 | Pi 和 Keel 怎么分工、怎样逐步接入 | [Pi 接入方案](keel-pi-integration-plan.md) | Agent 运行形式和接入方式以此为准；开发顺序由项目计划概括 |
 | 怎样监测 Pi 运行、隔离任务并汇总会话成本 | [make_bug 运行监测](../script_tool/make_bug/README.md#pi-运行监测默认开启) | single/split 均默认监测，Linux/WSL；Pi 1.0.4 最小调用与用量读取已验证 |
 | 怎样比较 Pi 单次任务与环境/复现两次任务 | [Pi 会话拆分实验](pi-session-experiment.md) | 对照设计、交接边界、会话采集和判定标准；运行进展见关联计划与 Issue |
@@ -27,7 +27,8 @@ Keel 的目标是加快人与 AI 的协作效率，减少反复解释、等待�
 ## 文档维护记录
 
 - [产品说明与项目计划重写](../plans/docs-rewrite.md)：文档恢复记录，以及 Issue #8 的定位与分阶段评测调整。
-- [复现评审回放原型](../plans/reproduction-review-replay.md)：下一项任务的输入隔离、评审建议协议、开发步骤和验收条件；仅登记，尚未实施。
+- [复现评审回放原型](../plans/reproduction-review-replay.md)：输入隔离、离线入口、材料缺口和后续模型验收条件。
+- [复现评审材料盘点](../plans/reproduction-review-inventory.json)：本机候选材料的来源、Issue 分组、运行与证据摘要；不作为模型输入或独立标签。
 - [Bug 复现工作流实施计划](../plans/make-bug.md)：Issue #2 的实现步骤与检查方法。
 - [Pi 运行监测](../plans/pi-run-monitoring.md)：Issue #7 的实现与验证。
 - [统一依赖清单](../plans/dependency-inventory.md)：Issue #5 的清单格式、接入与验证。

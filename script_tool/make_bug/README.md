@@ -646,3 +646,58 @@ Pi 在 `result/HANDOFF.json` 组织自己已产出的材料，不让 Keel 代写
 正常中断由既有运行器清理并留存记录。进程被强杀导致入口未收尾时，status 显示 running_or_interrupted；先核对进程，确认底层锁已释放后显式执行 `reconcile`，保守扣除该次预留时间，费用仍取原会话。不要删除记录来重置预算。没有自动续接、自动付费重试或自动扩预算；源码已偏离参考时，也不会用新修复会话冒充原会话继续。
 
 账本只覆盖通过本控制目录启动的调用。关联任务前的历史费用和绕过入口的直接调用不自动纳入，初始化必须对应明确授权的新执行范围，不能宣称是历史累计账单。既有 Actual 任务本轮没有升级或运行。
+
+## 只读复现评审离线入口
+
+Issue #14 的最小入口是 `src/review_replay.py`。它读取已经整理、冻结的材料，生成受限的评审输入，也可以校验合成响应。**没有模型调用入口，不启动 Pi、项目或场景，不改准入/验收状态。** 当前只验证协议，评审效果尚未验证。
+
+材料盘点、真实本地检查与后续范围见 [回放计划](../../plans/reproduction-review-replay.md)；候选来源见 [盘点清单](../../plans/reproduction-review-inventory.json)。上述链接相对本文件所在目录。
+
+在仓库根目录运行（`case-dir` 是事先整理好的冻结材料目录，`review-output` 必须是输入根外的全新目录）：
+
+```bash
+python3 script_tool/make_bug/src/review_replay.py \
+  --root /absolute/path/case-dir --manifest manifest.json \
+  --out /absolute/path/review-output
+```
+
+输出 `request.json` 与 `result.json`。`prepared` 只表示输入准备完成，必须同时查看 `mechanical.errors`；缺少报告、证据或只有未评阅的图片/视频时，不会因此获得通过建议。退出码 0 表示准备完成或响应协议有效；1 表示输入/协议失败、预算耗尽或机械检查阻塞；2 表示命令参数/输出位置不合法。
+
+清单格式为 JSON schema 1，下表列出必需字段：
+
+| 字段 | 约定 |
+| --- | --- |
+| `case_id` | 中性编号，如 `case-001`；不把正确答案写在名字里 |
+| `run_id` | 冻结 record 的运行编号 |
+| `issue_url`、`frozen_at`、`origin` | 原始来源、带时区的冻结时间、`historical` 或 `synthetic` |
+| `record` | `{ "path": "record.json", "sha256": "实际摘要" }`，路径相对输入根 |
+| `materials` | 1–100 个显式文件描述；没有自动递归扫描或自动补充当前工作区文件 |
+
+每个材料需要 `id`（`m1` 等唯一编号）、`path`、`sha256`、`role`、`format`。路径必须在输入根内且所有层级都不是符号链接。`role` 允许 `issue`、`scenario`、`source`、`report`、`evidence`；`format` 是 `text`（UTF-8）或 `binary`（只允许 evidence）。另外：
+
+- `issue` 的摘要必须与 record.problem_sha256 相同。
+- `scenario`、`source` 需要 `snapshot_path`，对应 record.scenario.files / record.code.files 中的原始键；内容摘要必须一致。可从原归档读取为字节相同的独立副本，不执行脚本，不改写历史内容。
+- `evidence` 需要 `evidence_path`，对应 record.evidence.artifacts 中的路径；大小和摘要都须一致。漏交原始证据会留下机械缺口。
+- `report` 须包含准确的本轮运行编号。摘要和轮次检查不能证明报告语义真实，也不能证明它是当时写下的版本；整理者须保留时间与来源依据。历史版本缺失时明确留空，不能拿后来的报告顶替。
+
+本版只把文本内容交给评审。二进制内容仅核对大小和摘要，明确记录尚未观看，并阻止放行；不要把视频名或 DOM 日志当作已经看到了画面。源码片段与快照匹配也不证明上下文足够，仍需后续语义审核。
+
+`request.json` 包含固定版本指令、案例/运行编号和指定材料；`run` 是从记录中生成的检查声明、实际检查及执行状态摘要，不含 record.review。来源索引、独立标签、旧外层意见、后续修复和响应必须留在评估侧。整理者负责材料内容的选取，程序无法识别故意误标角色的答案文件。将来模型只能获得 `request.json` 的内容，不能获得材料目录、文件工具或 shell 权限；当前不提供这样的模型适配器。
+
+可用 `--response /absolute/path/offline-response.json` 在另一个全新输出目录验证离线响应，仍须传入同一清单。响应必须显式标记 `mode: "synthetic"`，不是导入真实模型结果的授权。响应字段：
+
+- `schema: 1`、`mode: "synthetic"`、`request_sha256`（来自请求结果）、`case_id`、`run_id`。
+- `status` 为 `completed`、`timeout`、`budget_exhausted` 或 `error`。后三者须有 `error` 原因，按模拟调用失败记录，不计为“无法判断”。
+- completed 时需要 `decision`：`suggest_pass`、`suggest_return`、`undetermined`；需要 `concerns`、`findings`、`gaps`。
+- concerns 非空；concerns/findings 每条为 `{ "text": "意见", "certainty": "fact或inference", "citations": [...] }`。每条引用有 `material_id`、从 1 开始的 `start_line`/`end_line`、与该行范围完全相同的 `quote`。关注点至少引用 Issue 原文；不能引用未读的二进制内容、标签或不存在的材料。
+- 退回必须有带引用的问题；无法判断必须说明缺口；通过不能同时声明问题或缺口。引用匹配只验证出处，不评价意见的正确性。机械缺口不能被响应覆盖，原始建议仍保留在 review 中供诊断。
+
+`result.json` 独立保存机械错误、响应协议状态、摘要、耗时；始终标记 offline、model_called=false、formal_state_changed=false，模型与 token/费用为 null，不能把未知用量视作真实调用免费。失败响应只保存摘要和诊断，原文件由调用者保留。当前没有自动重试或正式验收接口。
+
+默认常规本地读取预算为 30 秒、总计 64 MiB（包括清单、记录、材料与响应），单文件上限 16 MiB，清单/响应各上限 1 MiB；`--seconds` 与 `--max-bytes` 可收紧。时间在读前读后检查，不是可以强制取消任意阻塞文件系统调用的进程超时，更不是模型费用上限。所有输入必须提前冻结，当前不支持并发改写材料；后续真实服务的超时取消和用量记录须另外实现、验证。
+
+离线测试（合成材料，不调用模型）：
+
+```bash
+python3 -m unittest discover -s script_tool/make_bug/test -p 'test_review_replay.py' -v
+```

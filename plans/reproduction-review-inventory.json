@@ -1,0 +1,1527 @@
+{
+  "schema": 1,
+  "inspected_at": "2026-10-20T18:27:42.976978+00:00",
+  "scope": "make_bug/experiments/*/*/task and output/*/task; no workspace scan or execution",
+  "tasks": [
+    {
+      "task": "experiments/first-ab/pair-01-A/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/first-ab/pair-01-A/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": []
+    },
+    {
+      "task": "experiments/first-ab/template/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/first-ab/template/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": []
+    },
+    {
+      "task": "experiments/fourth-ab/pair-04-A/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/fourth-ab/pair-04-A/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": [
+        {
+          "run_id": "run-20261013T105144-5tv826od",
+          "record": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105144-5tv826od/record.json",
+            "bytes": 850592,
+            "sha256": "6a36b510fda02dda953febb553e146ed89688ace3dfa0476c9fc442d08500476"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 3,
+          "frozen_issue": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105144-5tv826od/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105144-5tv826od/scenario.tar.gz",
+            "bytes": 9821,
+            "sha256": "355de81a0618be852b77a29eae359724dfcc5dfa2585809ac776450303cea22a"
+          },
+          "source_archive": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105144-5tv826od/code/source.tar.gz",
+            "bytes": 54815729,
+            "sha256": "edda264c88179e98a8afd1fc71a80bffbb1968cd7c79969eab30a45f41e9f11c"
+          },
+          "artifacts": 14,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261013T105418-hc2ngxko",
+          "record": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105418-hc2ngxko/record.json",
+            "bytes": 851829,
+            "sha256": "fa67a3337f34402b01c0b5f3aa03baf7510405ac33330a1b67b0e28d09b3cd52"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105418-hc2ngxko/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105418-hc2ngxko/scenario.tar.gz",
+            "bytes": 9978,
+            "sha256": "de7cc3865204ff3a8e613b788aa3a4831c0821a3e65a6ed21ccbd40f24530f2b"
+          },
+          "source_archive": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105418-hc2ngxko/code/source.tar.gz",
+            "bytes": 54815940,
+            "sha256": "4946edd5a5de9669d0416974fad5e64d75fa4c8b797fd6550213f60805e1d30a"
+          },
+          "artifacts": 15,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261013T105647-r153dgej",
+          "record": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105647-r153dgej/record.json",
+            "bytes": 852239,
+            "sha256": "5c7165093b64ff4c62d71a0a6fb07425cb414bef53dccd27ae39469ddbe7a51d"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105647-r153dgej/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105647-r153dgej/scenario.tar.gz",
+            "bytes": 10056,
+            "sha256": "0c0f56d72277814b9590b5ec1bd805cf8b7f255aa71f25d11c84693c6b13b373"
+          },
+          "source_archive": {
+            "path": "experiments/fourth-ab/pair-04-A/task/result/runs/run-20261013T105647-r153dgej/code/source.tar.gz",
+            "bytes": 54816068,
+            "sha256": "1b39cfd1a5cd43a6b6eb03ac607f704485a155949eeebcfca9d6a83699004c33"
+          },
+          "artifacts": 18,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        }
+      ]
+    },
+    {
+      "task": "experiments/fourth-ab/pair-04-B/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/fourth-ab/pair-04-B/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": []
+    },
+    {
+      "task": "experiments/fourth-ab/pair-04-B-retry/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/fourth-ab/pair-04-B-retry/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": [
+        {
+          "run_id": "run-20261013T115550-il0axwku",
+          "record": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115550-il0axwku/record.json",
+            "bytes": 972,
+            "sha256": "9afb8edd4a69dc7731d78a76b7f8b37deaf22d0c2b72cd633fbc31b42576c6d7"
+          },
+          "scenario_schema": null,
+          "execution_status": "error",
+          "checks": 0,
+          "frozen_issue": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115550-il0axwku/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": null,
+          "source_archive": null,
+          "artifacts": 0,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261013T115604-h28rnbb5",
+          "record": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115604-h28rnbb5/record.json",
+            "bytes": 849256,
+            "sha256": "5fcfb2bab543684ebdab9710ef334a5f49c006862836bb37bdb9bf34711435c9"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115604-h28rnbb5/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115604-h28rnbb5/scenario.tar.gz",
+            "bytes": 9820,
+            "sha256": "f8a0122a13f2ba2eadf2167d9e99f0fb103bef183debffb679afc5b5b878bc1a"
+          },
+          "source_archive": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115604-h28rnbb5/code/source.tar.gz",
+            "bytes": 56380598,
+            "sha256": "76709422b572575e50b3fb34c2cfd4604a06b15d00c656578548d8bcba1ed4ab"
+          },
+          "artifacts": 9,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261013T115742-wgshhxqz",
+          "record": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115742-wgshhxqz/record.json",
+            "bytes": 849256,
+            "sha256": "de2e3caf18ce556e06a61da604cefe2cf3fc63f75bad3c0fe38cf72a1fd30424"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115742-wgshhxqz/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115742-wgshhxqz/scenario.tar.gz",
+            "bytes": 9820,
+            "sha256": "cd063fe6a06b08bbc3a2f68207cb16b6968ff68eaf0322de836a47b984a7f5dc"
+          },
+          "source_archive": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115742-wgshhxqz/code/source.tar.gz",
+            "bytes": 56380598,
+            "sha256": "0d094120d9d7b5d2dbf214e0bc2655c39ed8d78b5427743c14598c10a48544e5"
+          },
+          "artifacts": 9,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261013T115850-kes5kkba",
+          "record": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115850-kes5kkba/record.json",
+            "bytes": 849256,
+            "sha256": "4b024d959e30aa4ce529c2dc5536cb8025c58083ad70eb472d9ce9aa0629b1fe"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115850-kes5kkba/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115850-kes5kkba/scenario.tar.gz",
+            "bytes": 9820,
+            "sha256": "fde9d19b738dece95cb2de761f57e3b99044e7e0ed3d329055f936951c3e3afe"
+          },
+          "source_archive": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115850-kes5kkba/code/source.tar.gz",
+            "bytes": 56380598,
+            "sha256": "646082c50db0f3bb9abb3ecb7d340367a038fac6da147b9123811dd817834df7"
+          },
+          "artifacts": 9,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261013T115956-hjue0a16",
+          "record": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115956-hjue0a16/record.json",
+            "bytes": 849256,
+            "sha256": "3577054245adb9c99220af9da5838c53824acbeb3aeb95551b82faceeee5d212"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115956-hjue0a16/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115956-hjue0a16/scenario.tar.gz",
+            "bytes": 9820,
+            "sha256": "ed65be7d2310db0966ccabfefcc120440cae895a72230ed99b075b7a6542d1d4"
+          },
+          "source_archive": {
+            "path": "experiments/fourth-ab/pair-04-B-retry/task/result/runs/run-20261013T115956-hjue0a16/code/source.tar.gz",
+            "bytes": 56380598,
+            "sha256": "9e620813d4dda17f9fd7f47cc779fd526a08d67f875fc738013f6e730295117c"
+          },
+          "artifacts": 9,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        }
+      ]
+    },
+    {
+      "task": "experiments/fourth-ab/template/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/fourth-ab/template/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": []
+    },
+    {
+      "task": "experiments/second-ab/pair-02-A/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/second-ab/pair-02-A/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": []
+    },
+    {
+      "task": "experiments/second-ab/template/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/second-ab/template/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": []
+    },
+    {
+      "task": "experiments/single-clean-20261019/attempt/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/single-clean-20261019/attempt/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": {
+        "path": "experiments/single-clean-20261019/attempt/task/result/REPRO.md",
+        "bytes": 26134,
+        "sha256": "0fa63a17cdf604ee639130998d95e4b5e02cfc229513754be79196d6111e669d"
+      },
+      "runs": [
+        {
+          "run_id": "run-20261019T113440-jh0hrlns",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113440-jh0hrlns/record.json",
+            "bytes": 852426,
+            "sha256": "7f5107cf61dbb5489434b58703018aa0d285aaf915429a752d4f8bdb8aa5c105"
+          },
+          "scenario_schema": 1,
+          "execution_status": "error",
+          "checks": 5,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113440-jh0hrlns/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113440-jh0hrlns/scenario.tar.gz",
+            "bytes": 10167,
+            "sha256": "57d8d1f8b9c70bb47918645ffd24f603f6891095d30d6e64affc2e85b19cceb7"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113440-jh0hrlns/code/source.tar.gz",
+            "bytes": 54814533,
+            "sha256": "6417056c979cbd5b1ed4bc6c44d5f3fd7f316f74fab817094f4c7f112ea8f897"
+          },
+          "artifacts": 19,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T113627-u99y9z3l",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113627-u99y9z3l/record.json",
+            "bytes": 852141,
+            "sha256": "d00b91072174fe94f79d156b56f4d7eb1f58e4f9dae53f9c12d8782e63336e5e"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113627-u99y9z3l/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113627-u99y9z3l/scenario.tar.gz",
+            "bytes": 10196,
+            "sha256": "fa7b58f1ae93233f8a2b10d9297ab23fb845b9c18c42af7fe726a939bd801790"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113627-u99y9z3l/code/source.tar.gz",
+            "bytes": 54814533,
+            "sha256": "158f2a6c11e0c20591b739f4927f48182e934eee0e1de475b790231aef607c4b"
+          },
+          "artifacts": 19,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T113752-5tclx2se",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113752-5tclx2se/record.json",
+            "bytes": 851967,
+            "sha256": "4c5c36a40d6718f2a115428eab6470fa7b00442d7844f49d9a80c482c3f3e38a"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113752-5tclx2se/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113752-5tclx2se/scenario.tar.gz",
+            "bytes": 10095,
+            "sha256": "2333ad838575b1202b7f845b41457f7555478d63f3c8d8ff56e91927fa14f2dd"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113752-5tclx2se/code/source.tar.gz",
+            "bytes": 54814419,
+            "sha256": "296b6567e48783c20c21a7998016b4b9a92a4602c2bafa4c69059d56db753432"
+          },
+          "artifacts": 18,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T113856-kq3fw1v3",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113856-kq3fw1v3/record.json",
+            "bytes": 851992,
+            "sha256": "201358b0a97e701f5ba9590921a160f247f9d328d45fff6ebb9c9309355f82cb"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113856-kq3fw1v3/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113856-kq3fw1v3/scenario.tar.gz",
+            "bytes": 10095,
+            "sha256": "1d2c7f43fd220410bacfd0661efe97a9f527b46eedb070ca07a4dae6347d6c6b"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113856-kq3fw1v3/code/source.tar.gz",
+            "bytes": 54814419,
+            "sha256": "32fbe1e8076c713e742da33cae6405bb1f395b1eeaeb14d054f30d6c1b6517bb"
+          },
+          "artifacts": 18,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T113957-ahr2tx3c",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113957-ahr2tx3c/record.json",
+            "bytes": 852021,
+            "sha256": "a6ea454d98598a46d958e1902293f5a3963b7605faad66513ba657e0a367d743"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113957-ahr2tx3c/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113957-ahr2tx3c/scenario.tar.gz",
+            "bytes": 10095,
+            "sha256": "d1dc44029258400c53ef3b4cdec26839a3d2e16dea0be4f76aee12c3af22be0d"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T113957-ahr2tx3c/code/source.tar.gz",
+            "bytes": 54814419,
+            "sha256": "eca289c1fed0b97ae613c20c427638c88ad53c4dbeb12efa4c8be0dbe1da0adb"
+          },
+          "artifacts": 18,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T114145-7wbwrcz5",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114145-7wbwrcz5/record.json",
+            "bytes": 853144,
+            "sha256": "447af296bc721d9676bf7d723e9a86b712ab5ec8eb53202498d07607c4a0e6fc"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114145-7wbwrcz5/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114145-7wbwrcz5/scenario.tar.gz",
+            "bytes": 10463,
+            "sha256": "530dc3d26812dcb16f2407b145d4959e6b45a395f88149399491266fc3419fb7"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114145-7wbwrcz5/code/source.tar.gz",
+            "bytes": 54814942,
+            "sha256": "22707aebc598288e3c71efddc5437604b7ae721f9ffae45a25185659b12e883e"
+          },
+          "artifacts": 23,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T114305-fgs9vex7",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114305-fgs9vex7/record.json",
+            "bytes": 853119,
+            "sha256": "9ba1c863d8159974e0137e12d3f5235cbbdfe9dcd0eee81855fa30f35b1c12a4"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114305-fgs9vex7/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114305-fgs9vex7/scenario.tar.gz",
+            "bytes": 10463,
+            "sha256": "7dc29e9c3f171e9141c4abac8171d77c8f4fdeddfb6c92e0496d807ecad18208"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114305-fgs9vex7/code/source.tar.gz",
+            "bytes": 54814942,
+            "sha256": "72bfeee30204faada18855f6ffef25c22fb94054ce3a711dd88d9a36102d8854"
+          },
+          "artifacts": 23,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T114420-de3o0ulr",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114420-de3o0ulr/record.json",
+            "bytes": 853130,
+            "sha256": "1612deffbca72fccd9accaafe0c75bb3f1b2fecac9241701272f3b775db1beb3"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114420-de3o0ulr/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114420-de3o0ulr/scenario.tar.gz",
+            "bytes": 10463,
+            "sha256": "60cd7c2929e0ca339c587d750a17af4b5a6e7536b17d33160e2dc3817b13edb9"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114420-de3o0ulr/code/source.tar.gz",
+            "bytes": 54814942,
+            "sha256": "ce291db14f3c5b9232a0f57118ac3c88160c9deb481d4140ccd9a30818c3a4ee"
+          },
+          "artifacts": 23,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T114602-05n_ew4u",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114602-05n_ew4u/record.json",
+            "bytes": 854711,
+            "sha256": "e59ce1d2bc1baa924cc5cc132f700339ccf17af3e05b933b47f727551fc6e5b9"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114602-05n_ew4u/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114602-05n_ew4u/scenario.tar.gz",
+            "bytes": 10707,
+            "sha256": "e2f4ba08d083ba104d704b535f2597b72dd2ee9d0919443ab998e24eca19b268"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114602-05n_ew4u/code/source.tar.gz",
+            "bytes": 54814962,
+            "sha256": "70673badb2ceb55fa91196dcb4924499ac89950742db3fb43219097cd8c5b0fb"
+          },
+          "artifacts": 23,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T114721-wa_ayrtq",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114721-wa_ayrtq/record.json",
+            "bytes": 854678,
+            "sha256": "153576ec90702e7104e608d622eeb7a539e6d4ce8ee4e2c0644f8c2c00aa734d"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114721-wa_ayrtq/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114721-wa_ayrtq/scenario.tar.gz",
+            "bytes": 10707,
+            "sha256": "f84d0aec6a0943f10e13d6c8a67023768bf3c4124860f97ba65efcfc2e72769e"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114721-wa_ayrtq/code/source.tar.gz",
+            "bytes": 54814962,
+            "sha256": "44e4d0adf78d71e2599e5a807d9d09ce32af1f882e7dfd25c3950f2136f2ce52"
+          },
+          "artifacts": 23,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T114836-xoop2754",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114836-xoop2754/record.json",
+            "bytes": 854886,
+            "sha256": "5ee9012c98d66af954c0d15a6d7d975a4f41b9f2c1a5a161759848b3200ab583"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114836-xoop2754/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114836-xoop2754/scenario.tar.gz",
+            "bytes": 10707,
+            "sha256": "483c2ed06b3c3c8cd91979ba7f8dd63e871e0f453d3d1045c8d69d72c356fbb4"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T114836-xoop2754/code/source.tar.gz",
+            "bytes": 54814962,
+            "sha256": "d4910bc1f1dbc30b357e205c0107edc596ef899c004e17876eccc4e2de60dfd3"
+          },
+          "artifacts": 23,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T115155-0vhdkzp7",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T115155-0vhdkzp7/record.json",
+            "bytes": 854711,
+            "sha256": "af24774db8a16be533899e20b513d677a210076982554e7273ec668c8d4bf21a"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 4,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T115155-0vhdkzp7/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T115155-0vhdkzp7/scenario.tar.gz",
+            "bytes": 10707,
+            "sha256": "5d1fad51699202f8b0a6fcb18cbcf3e58c90dfcd9f41833eaa7e5ef839efc39e"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T115155-0vhdkzp7/code/source.tar.gz",
+            "bytes": 54814962,
+            "sha256": "b0f928fd76e196c67d01c5cf6907de47726e65b85c803542cb4485ed7310a2f7"
+          },
+          "artifacts": 23,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T162700-3l3v7evi",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162700-3l3v7evi/record.json",
+            "bytes": 859370,
+            "sha256": "b3aaaecd0106eb6dbef530952bab42ce04b82cb11aa62c1f50371b2fc24d38ff"
+          },
+          "scenario_schema": 2,
+          "execution_status": "completed",
+          "checks": 6,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162700-3l3v7evi/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162700-3l3v7evi/scenario.tar.gz",
+            "bytes": 12852,
+            "sha256": "a14fbbb6bc10a1eb1d16f7d27a19bb4f1bbd440dac83e5bc9a503b7fd80ffe2e"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162700-3l3v7evi/code/source.tar.gz",
+            "bytes": 54816420,
+            "sha256": "6956d72fe3527f3271711a7610dce83de67b573ac49cd663a4f813159fa3f008"
+          },
+          "artifacts": 27,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T162825-c46nf81x",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162825-c46nf81x/record.json",
+            "bytes": 859340,
+            "sha256": "1d2baa5b5b3a484dd6b14172d80533a51b010dc991545090f907e9d76b3b77e1"
+          },
+          "scenario_schema": 2,
+          "execution_status": "completed",
+          "checks": 6,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162825-c46nf81x/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162825-c46nf81x/scenario.tar.gz",
+            "bytes": 12852,
+            "sha256": "21ac85d7f61c9c82904986fb32b87a6e8e8bca15ce70b76680e95f1f5628cbff"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162825-c46nf81x/code/source.tar.gz",
+            "bytes": 54816420,
+            "sha256": "fd39b1474c46b670253cf73b69ee6fa03ecf3d79e7f73e7fc2317855eda94006"
+          },
+          "artifacts": 27,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T162942-gosyzbhn",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162942-gosyzbhn/record.json",
+            "bytes": 859315,
+            "sha256": "25cc455443220fc8526dc47e013d130370f29921e73f9bf7196db85f244d3975"
+          },
+          "scenario_schema": 2,
+          "execution_status": "completed",
+          "checks": 6,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162942-gosyzbhn/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162942-gosyzbhn/scenario.tar.gz",
+            "bytes": 12852,
+            "sha256": "3d9fa807344605531bf4be7abff7a192619243154117631de0c90afe32f05b0e"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T162942-gosyzbhn/code/source.tar.gz",
+            "bytes": 54816420,
+            "sha256": "7ddb1c489d783d5df554feacbe6f1e58c30ba608f4dfdedd6780999716035697"
+          },
+          "artifacts": 27,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T163114-v3pnnvs9",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163114-v3pnnvs9/record.json",
+            "bytes": 858862,
+            "sha256": "c0e3c9e7e2c9517ab2afd328df894c0fb8831a6f5d1799125044c4cb5c4a771c"
+          },
+          "scenario_schema": 2,
+          "execution_status": "completed",
+          "checks": 6,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163114-v3pnnvs9/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163114-v3pnnvs9/scenario.tar.gz",
+            "bytes": 13272,
+            "sha256": "f0b2d9d3a2ec8f171a4ad58a52a82b7a9c60ff4b08ea7c02c27098dab329adf2"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163114-v3pnnvs9/code/source.tar.gz",
+            "bytes": 54816682,
+            "sha256": "76d780268bdcd38ac5d6a27783abd7b561f04bcde52dfdefc762fac066af7f4a"
+          },
+          "artifacts": 27,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T163238-tomfm3f0",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163238-tomfm3f0/record.json",
+            "bytes": 858890,
+            "sha256": "932fe1918c3ed7943bb61f9a2ce9b0aa003a54be139e852e5cfe1dd2228e7af1"
+          },
+          "scenario_schema": 2,
+          "execution_status": "completed",
+          "checks": 6,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163238-tomfm3f0/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163238-tomfm3f0/scenario.tar.gz",
+            "bytes": 13272,
+            "sha256": "57cf91551ac5541eab281bf36448bda765506191808307d412af09994b55147f"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163238-tomfm3f0/code/source.tar.gz",
+            "bytes": 54816682,
+            "sha256": "2fe5919839fe99a9c7d2077cd8bc264c4eb5cac6455dea5a7a7cf7a695b67528"
+          },
+          "artifacts": 27,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T163354-v08egvtd",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163354-v08egvtd/record.json",
+            "bytes": 858892,
+            "sha256": "d3f15235556382c9eda782097d0874e541a6fa4d92260aa4ac4bb72b4f498252"
+          },
+          "scenario_schema": 2,
+          "execution_status": "completed",
+          "checks": 6,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163354-v08egvtd/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163354-v08egvtd/scenario.tar.gz",
+            "bytes": 13272,
+            "sha256": "a2c1010d4eedd018c39aa12bd37adc6abae45954cc99bb33eb3cfc79dcd3cfc4"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163354-v08egvtd/code/source.tar.gz",
+            "bytes": 54816682,
+            "sha256": "182cf8b220ef0227f1c46c44db835bbf6fc90c38a168dc2e4f88efee04f0790d"
+          },
+          "artifacts": 27,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T163508-2cq384z8",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163508-2cq384z8/record.json",
+            "bytes": 858893,
+            "sha256": "04401450285d422b2c3938015b33eb4a2f20f473e2264bc8ef42ccd751a5dc0d"
+          },
+          "scenario_schema": 2,
+          "execution_status": "completed",
+          "checks": 6,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163508-2cq384z8/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163508-2cq384z8/scenario.tar.gz",
+            "bytes": 13272,
+            "sha256": "223d296d5afaa0a79f866f51af8c307789149007d3de944be2696d7378b68d54"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T163508-2cq384z8/code/source.tar.gz",
+            "bytes": 54816682,
+            "sha256": "afb2ede76619fa705ca2c8a4859c252e116343ebfedcf2f391acc85b377d49fe"
+          },
+          "artifacts": 27,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T171249-7t9rgtt1",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T171249-7t9rgtt1/record.json",
+            "bytes": 859042,
+            "sha256": "9b23f0c518f1ed09d0b1f0641d6eeeab0ede11f3745e278cc67d1191ec43ee41"
+          },
+          "scenario_schema": 2,
+          "execution_status": "completed",
+          "checks": 6,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T171249-7t9rgtt1/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T171249-7t9rgtt1/scenario.tar.gz",
+            "bytes": 13634,
+            "sha256": "ee6f7247124c64bf76a879a68fcccfd0f8ebdabacdbd302c5965084cdab0ab66"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T171249-7t9rgtt1/code/source.tar.gz",
+            "bytes": 54817175,
+            "sha256": "7b34b99437c9aa27e7fb27caa675ef864a449a62910d37017c9182092cd5a7b7"
+          },
+          "artifacts": 27,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T173608-7p1uoxax",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T173608-7p1uoxax/record.json",
+            "bytes": 857159,
+            "sha256": "081d8d64e99714418638ebe7cf08d044ce2578d11366f74a88958766fe400082"
+          },
+          "scenario_schema": 2,
+          "execution_status": "completed",
+          "checks": 6,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T173608-7p1uoxax/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T173608-7p1uoxax/scenario.tar.gz",
+            "bytes": 13634,
+            "sha256": "2c8c91a761ac0ad7d170bdc4aba48ebded9cafb21268c464b5bc9c7e930d64ad"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T173608-7p1uoxax/code/source.tar.gz",
+            "bytes": 54817480,
+            "sha256": "a3cb19a831e140f5c7423e05f1385baaef802368dfe98ef03f9af14df13ebd4f"
+          },
+          "artifacts": 21,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T175149-udpyx1un",
+          "record": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T175149-udpyx1un/record.json",
+            "bytes": 857157,
+            "sha256": "42673ab3c49430fdb344eae7044eb13f51d11e5a92b3acb477b67da21c8b38c0"
+          },
+          "scenario_schema": 2,
+          "execution_status": "completed",
+          "checks": 6,
+          "frozen_issue": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T175149-udpyx1un/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T175149-udpyx1un/scenario.tar.gz",
+            "bytes": 13634,
+            "sha256": "3df07a7a8adf3482d58d520b27c67a427ac730989e1ebf841df70752a0b7247e"
+          },
+          "source_archive": {
+            "path": "experiments/single-clean-20261019/attempt/task/result/runs/run-20261019T175149-udpyx1un/code/source.tar.gz",
+            "bytes": 54817480,
+            "sha256": "6cd360846a686baf40ca560484959cf22b0c6dfdf9c1a5e7823f83d70bd633a2"
+          },
+          "artifacts": 21,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        }
+      ]
+    },
+    {
+      "task": "experiments/single-clean-20261019/prepared/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/single-clean-20261019/prepared/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": []
+    },
+    {
+      "task": "experiments/third-ab/pair-03-A/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/third-ab/pair-03-A/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": []
+    },
+    {
+      "task": "experiments/third-ab/pair-03-B/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/third-ab/pair-03-B/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": {
+        "path": "experiments/third-ab/pair-03-B/task/result/REPRO.md",
+        "bytes": 9581,
+        "sha256": "8bfa64d3151b3e40cd4565977c045051300e8c1b6f551571fbbbd9240f01bd58"
+      },
+      "runs": [
+        {
+          "run_id": "run-20261013T092143-8uesl7wv",
+          "record": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092143-8uesl7wv/record.json",
+            "bytes": 965,
+            "sha256": "3952248d824f7ec8e35d95c984f33a06df769b70953b2d79669b92eb727e5906"
+          },
+          "scenario_schema": null,
+          "execution_status": "error",
+          "checks": 0,
+          "frozen_issue": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092143-8uesl7wv/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": null,
+          "source_archive": null,
+          "artifacts": 0,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261013T092153-38_1i_5x",
+          "record": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092153-38_1i_5x/record.json",
+            "bytes": 846469,
+            "sha256": "f18d6113f37e71c5d7f07bc53a7d7d4f83ccf663996e5d56e6edd653fbec80ea"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092153-38_1i_5x/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092153-38_1i_5x/scenario.tar.gz",
+            "bytes": 6904,
+            "sha256": "f96dac9c2456774c42e8b791ddf3a79a914911315f368778ecc3d4b2f15fdc90"
+          },
+          "source_archive": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092153-38_1i_5x/code/source.tar.gz",
+            "bytes": 54812555,
+            "sha256": "adadfea37cc19ccf9f37423c1326ca37ac8f1bdf49cf418463b11a9fab6961de"
+          },
+          "artifacts": 8,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261013T092316-_ymg35vu",
+          "record": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092316-_ymg35vu/record.json",
+            "bytes": 846471,
+            "sha256": "43e0f91a9f720be4813a198aa1df0ce255b102ab58daf5d9239a972bee7b3404"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092316-_ymg35vu/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092316-_ymg35vu/scenario.tar.gz",
+            "bytes": 6904,
+            "sha256": "f2be162803e3722ac856733713a86d6134df60452fdb3c6aea4d293d6e03f84e"
+          },
+          "source_archive": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092316-_ymg35vu/code/source.tar.gz",
+            "bytes": 54812555,
+            "sha256": "ee047cdc7cc4d3c3680dcdc75c67f384795c0ba22c1bc6d8ba59ee811f65412b"
+          },
+          "artifacts": 8,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261013T092428-livp29se",
+          "record": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092428-livp29se/record.json",
+            "bytes": 846470,
+            "sha256": "f7e9780263a1d321f7183e3d19bb75ef1159abde6b5f63da5314617645db8807"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092428-livp29se/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092428-livp29se/scenario.tar.gz",
+            "bytes": 6904,
+            "sha256": "7bb0b42353bfd99d0052294dd87136168c4de54be413629e79fdcdd15213fc30"
+          },
+          "source_archive": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092428-livp29se/code/source.tar.gz",
+            "bytes": 54812555,
+            "sha256": "d542fb46bdd4f32779413b3cf3901966d5d9426c02c4a10e647ae6552b14dc95"
+          },
+          "artifacts": 8,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261013T092543-zcpzkrz_",
+          "record": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092543-zcpzkrz_/record.json",
+            "bytes": 846470,
+            "sha256": "9b4e6156b6cdd05e0d6fa520bf0af2a31c501e8e98dd042da0bed1a9bd0af408"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092543-zcpzkrz_/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092543-zcpzkrz_/scenario.tar.gz",
+            "bytes": 6904,
+            "sha256": "fc0f88cc6bae940fa17c0c0fd74bd7e8ef824ac4d601f0abd3687198e50c027a"
+          },
+          "source_archive": {
+            "path": "experiments/third-ab/pair-03-B/task/result/runs/run-20261013T092543-zcpzkrz_/code/source.tar.gz",
+            "bytes": 54812555,
+            "sha256": "dc43e1b5db41a5239433a0eec4ea8f39383088aca7e2218c9747cb742030d5e7"
+          },
+          "artifacts": 8,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        }
+      ]
+    },
+    {
+      "task": "experiments/third-ab/template/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "experiments/third-ab/template/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": null,
+      "runs": []
+    },
+    {
+      "task": "output/actual-8351-independent-20261019/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "output/actual-8351-independent-20261019/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": {
+        "path": "output/actual-8351-independent-20261019/task/result/REPRO.md",
+        "bytes": 1984,
+        "sha256": "941a1667506a83c539a32e19fb52c72f43880a6081eb85e6e455cb8d456212ca"
+      },
+      "runs": [
+        {
+          "run_id": "run-20261019T093813-on8rt_03",
+          "record": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093813-on8rt_03/record.json",
+            "bytes": 853664,
+            "sha256": "99be5cefd509c7df0c6392dfdf76888a8478f94f789aff22defb28ded730c6f4"
+          },
+          "scenario_schema": 1,
+          "execution_status": "blocked",
+          "checks": 0,
+          "frozen_issue": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093813-on8rt_03/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093813-on8rt_03/scenario.tar.gz",
+            "bytes": 23161,
+            "sha256": "5c19fe574d7f9896a710cc3e756de1ea1f03cd6a99e24cd6d354936049268bfc"
+          },
+          "source_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093813-on8rt_03/code/source.tar.gz",
+            "bytes": 54813264,
+            "sha256": "85a8ae2e1498843f3639b9a9958d96d66ee3423a573439b123151603967c5606"
+          },
+          "artifacts": 2,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T093842-co0s_16o",
+          "record": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093842-co0s_16o/record.json",
+            "bytes": 855162,
+            "sha256": "f1f6d4bffc8eee35f0e7fe60dda1d2d4d9399cc3b0a6d6752b27bb0df5a632d6"
+          },
+          "scenario_schema": 1,
+          "execution_status": "error",
+          "checks": 0,
+          "frozen_issue": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093842-co0s_16o/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093842-co0s_16o/scenario.tar.gz",
+            "bytes": 23161,
+            "sha256": "cc494b0616b9625bf2dbbf5edf46a7a960f1c9c9750966c0c0cc65706fb34a4b"
+          },
+          "source_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093842-co0s_16o/code/source.tar.gz",
+            "bytes": 54813264,
+            "sha256": "d7a8f3f4f74ac9c8b36ca4bfecfe760c784e538f0768bdf7c3623457c5cf2c17"
+          },
+          "artifacts": 8,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T093950-vbd4w5mx",
+          "record": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093950-vbd4w5mx/record.json",
+            "bytes": 856457,
+            "sha256": "12ef3783e4384c7517885ed80bb3181e24c4b8d2a931246cc71f7459bbe76fd3"
+          },
+          "scenario_schema": 1,
+          "execution_status": "error",
+          "checks": 0,
+          "frozen_issue": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093950-vbd4w5mx/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093950-vbd4w5mx/scenario.tar.gz",
+            "bytes": 163337,
+            "sha256": "5d972a3ec4494db52250ee607a87ccefd900f5b736d813082829df9f8a26e4bb"
+          },
+          "source_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T093950-vbd4w5mx/code/source.tar.gz",
+            "bytes": 54813264,
+            "sha256": "6d29acb44c0ff7fd0744355a308b4e6112f0fe330edb9fa577483c3a65c05fd0"
+          },
+          "artifacts": 10,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T094952-hveth471",
+          "record": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T094952-hveth471/record.json",
+            "bytes": 861634,
+            "sha256": "d88cb92f131e0086abd914ff4d9f6fd02081678c59edb54ee760263614cabf2f"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T094952-hveth471/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T094952-hveth471/scenario.tar.gz",
+            "bytes": 163348,
+            "sha256": "da4ec5cc17e63fe7b73541ff65fec59d22de3685079c3a90b9ab376d5b8acc75"
+          },
+          "source_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T094952-hveth471/code/source.tar.gz",
+            "bytes": 54813264,
+            "sha256": "53e13dd5e41017cc095cc5d0e25feb8f9db21422fc41bad4e4c1fe969f01bfdb"
+          },
+          "artifacts": 14,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T095051-xzdpy2m5",
+          "record": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T095051-xzdpy2m5/record.json",
+            "bytes": 861655,
+            "sha256": "153c40e13afe37269defa77186808ccc90d79e58fe2b69b29961bc71533cb335"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T095051-xzdpy2m5/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T095051-xzdpy2m5/scenario.tar.gz",
+            "bytes": 163348,
+            "sha256": "082f38f02329829e2515d5396e8f1af268dec91197a21c4ae19ba479ce10a496"
+          },
+          "source_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T095051-xzdpy2m5/code/source.tar.gz",
+            "bytes": 54813264,
+            "sha256": "7f398b43cc2254389a1f03d2adbf35253332c52e810d759ea0d671bf452b03d6"
+          },
+          "artifacts": 14,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T095149-3gvjxu_b",
+          "record": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T095149-3gvjxu_b/record.json",
+            "bytes": 861480,
+            "sha256": "2411ae26150132f0f4683210350f1ca530ae56e9181ec2ab981ebcdbc009dd05"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T095149-3gvjxu_b/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T095149-3gvjxu_b/scenario.tar.gz",
+            "bytes": 163348,
+            "sha256": "9a9f93e64d53cb12458421ec3c7a68ebcaec461389fac4802da70c83bb18acc8"
+          },
+          "source_archive": {
+            "path": "output/actual-8351-independent-20261019/task/result/runs/run-20261019T095149-3gvjxu_b/code/source.tar.gz",
+            "bytes": 54813264,
+            "sha256": "b517304e5ed6b79746cb05b40dad5ce6b25db42d63574ea2f8e481d064e6061c"
+          },
+          "artifacts": 14,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        }
+      ]
+    },
+    {
+      "task": "output/actualbudget-actual-8351/task",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "issue": {
+        "path": "output/actualbudget-actual-8351/task/BUG.md",
+        "bytes": 1442,
+        "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+      },
+      "current_report": {
+        "path": "output/actualbudget-actual-8351/task/result/REPRO.md",
+        "bytes": 18277,
+        "sha256": "7221bd2cafb697df0791eaa9f757bc0dbd1c2ec4f49cdfd8625c644e801e4e93"
+      },
+      "runs": [
+        {
+          "run_id": "run-20261012T132451-r52y9ov8",
+          "record": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261012T132451-r52y9ov8/record.json",
+            "bytes": 853306,
+            "sha256": "1c071e90b1b8c48974cfc1a8896897d7e3e34babff84de7477b84e02f975d154"
+          },
+          "scenario_schema": 1,
+          "execution_status": "blocked",
+          "checks": 0,
+          "frozen_issue": null,
+          "scenario_archive": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261012T132451-r52y9ov8/scenario.tar.gz",
+            "bytes": 22108,
+            "sha256": "03c070f4bc1ea745fb4f741332fd34d2ef340018388305d30aa25c59c4296767"
+          },
+          "source_archive": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261012T132451-r52y9ov8/code/source.tar.gz",
+            "bytes": 54813284,
+            "sha256": "79cc80fa760e3f4e63b1ac4a2687b3dd06e77d5949f13726d3716d020fecb56a"
+          },
+          "artifacts": 1,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261012T132652-eyk__h8c",
+          "record": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261012T132652-eyk__h8c/record.json",
+            "bytes": 856636,
+            "sha256": "f1c0e23aac616bbe3e3af8c9518e39a38c31ef3aac9dd9034aa9043131509552"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 0,
+          "frozen_issue": null,
+          "scenario_archive": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261012T132652-eyk__h8c/scenario.tar.gz",
+            "bytes": 22108,
+            "sha256": "37ab6d64844afc403cbada370431ea1a6d05fe3b6ba3941a5ec06d96df7f7519"
+          },
+          "source_archive": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261012T132652-eyk__h8c/code/source.tar.gz",
+            "bytes": 54813284,
+            "sha256": "5b384e56632ec1ceb4299a66c234145f278b9e0a6c9e4f3b10ac3bc5cba5c763"
+          },
+          "artifacts": 9,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261012T133043-ho66cn_x",
+          "record": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261012T133043-ho66cn_x/record.json",
+            "bytes": 856650,
+            "sha256": "ae4543ccbd2041b136e2194cbce4423e5c491d910d8a801248b04674a959b1a9"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261012T133043-ho66cn_x/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261012T133043-ho66cn_x/scenario.tar.gz",
+            "bytes": 22108,
+            "sha256": "94fd7d64b5b00460ca8f61130e15938e8d57b1d93b8175b039cf8aeb85dd12a8"
+          },
+          "source_archive": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261012T133043-ho66cn_x/code/source.tar.gz",
+            "bytes": 54813284,
+            "sha256": "5b3d33c8020701941489e00dd8ab28bfde955d226aa05619b242c620a97c5656"
+          },
+          "artifacts": 9,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        },
+        {
+          "run_id": "run-20261019T095546-5oth5eea",
+          "record": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261019T095546-5oth5eea/record.json",
+            "bytes": 860860,
+            "sha256": "38979a4fdd5ed5f74be9658bcffbfc808529657b09e3527eec582d5298dfec13"
+          },
+          "scenario_schema": 1,
+          "execution_status": "completed",
+          "checks": 2,
+          "frozen_issue": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261019T095546-5oth5eea/BUG.md",
+            "bytes": 1442,
+            "sha256": "ae7156a470b897d548b6e3df7f11b0cde41ec721e7d15eef0e5cb92e04bdd581"
+          },
+          "scenario_archive": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261019T095546-5oth5eea/scenario.tar.gz",
+            "bytes": 163348,
+            "sha256": "732fd5e7bf78ac1e498639500a38f96cb9c532096be2fb3457d77cf7ec813252"
+          },
+          "source_archive": {
+            "path": "output/actualbudget-actual-8351/task/result/runs/run-20261019T095546-5oth5eea/code/source.tar.gz",
+            "bytes": 54813284,
+            "sha256": "290b9627bda181712a924bb8f64abac346fa5a8f0dee4fba8d4e72ca1e057c03"
+          },
+          "artifacts": 13,
+          "artifact_errors": [],
+          "frozen_pi_report": null
+        }
+      ]
+    },
+    {
+      "task": "output/outline-outline-13405/task",
+      "issue_group": "outline/outline#13405",
+      "split": "unassigned",
+      "issue": {
+        "path": "output/outline-outline-13405/task/BUG.md",
+        "bytes": 4457,
+        "sha256": "9e47ae22f8dca545e28b3521a20032cdd3b5c88626773df0da9eb92a487e6920"
+      },
+      "current_report": {
+        "path": "output/outline-outline-13405/task/result/REPRO.md",
+        "bytes": 11855,
+        "sha256": "0ec87773b6bd2ecad235e00cb2e61d82418c60a0097c81b3534add90ba6068d0"
+      },
+      "runs": []
+    }
+  ],
+  "limitations": [
+    "运行数不等于独立 Issue 数；相同 Actual Issue 只能归入同一组",
+    "摘要和现存文件不能证明历史报告完整；当前 REPRO 不视为逐轮冻结报告",
+    "本次没有冻结独立标签，也没有可验收的留出集"
+  ],
+  "separate_reports": [
+    {
+      "path": "experiments/actual-repair-20261020/review/initial/REPRO.md",
+      "bytes": 16265,
+      "sha256": "5bd7a527de9045abcd4425195e2e0512104c218039c935c7c2fb6b001a90eb49"
+    }
+  ],
+  "summary": {
+    "tasks": 16,
+    "runs": 45,
+    "groups": [
+      "actualbudget/actual#8351",
+      "outline/outline#13405"
+    ],
+    "artifact_errors": 0
+  }
+}
