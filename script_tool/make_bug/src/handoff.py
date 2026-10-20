@@ -11,6 +11,7 @@ from urllib.parse import quote
 import delivery
 import evidence
 import repair
+from run_scenario import RUNTIME_FILES
 
 
 def check_archive(task, record):
@@ -82,6 +83,14 @@ def inspect(control, state, task, *, budget=None):
                         ('scenario/check.sh', '就绪检查脚本'), ('scenario/run.sh', '场景步骤'),
                         ('run_scenario.sh', '正式重跑入口')]:
         attempt(lambda name=name, label=label: add(task, name, label))
+    for name in RUNTIME_FILES:
+        attempt(lambda name=name: add(task, name, '重跑工具：' + name))
+    # 外层独立重跑使用仓库模块；升级审核端也不能沿用旧内容的验收摘要。
+    digests['keel_review_runtime'] = evidence.snapshot(
+        Path(__file__).parent,
+        (*RUNTIME_FILES, 'handoff.py', 'task_flow.py', 'delivery.py', 'session_stats.py',
+         'run_pi.py', 'run_isolation.py'),
+    )['digest']
     baseline = attempt(lambda: task_flow.reference(control, state, task))
     if state['reference']:
         attempt(lambda: add(control, state['reference'], '外层复现准入'))

@@ -1,5 +1,6 @@
 """仅合成项目/假 Pi；不读取真实任务或调用模型。"""
 import contextlib
+import fcntl
 from datetime import datetime, timedelta, timezone
 import io
 import json
@@ -243,6 +244,121 @@ class FlowTests(unittest.TestCase):
         archive = self.task / 'result/runs' / report['candidate_run'] / 'code/source.tar.gz'
         archive.write_bytes(b'broken archive')
         self.assertTrue(handoff.inspect(self.control, self.state, self.task)['errors'])
+
+    def test_runtime_change_or_missing_helper_invalidates_accepted_review(self):
+        self.closed()
+        flow.begin_review(self.control, self.state, self.task)
+        flow.finish_review(self.control, self.state, self.task, 'accepted', 'outer', ['checked'])
+        original_review = dict(self.state['reviews'][-1])
+        for name in ('run_scenario.py', 'evidence.py', 'repair.py', 'process_tree.py',
+                     'prepare_tools.py', 'dependency_inventory.py'):
+            path = self.task / name
+            original = path.read_bytes()
+            for action in ('change', 'remove'):
+                with self.subTest(name=name, action=action):
+                    if action == 'change':
+                        path.write_bytes(b'raise SystemExit(1)\n')
+                    else:
+                        path.unlink()
+                    self.assertEqual(flow.status(self.control, self.state, self.task)['stage'], 'review_outdated')
+                    self.assertEqual(self.state['reviews'][-1], original_review)
+                    path.write_bytes(original)
+        self.assertEqual(flow.status(self.control, self.state, self.task)['stage'], 'accepted')
+
+    def test_review_runtime_upgrade_and_in_review_change_require_new_review(self):
+        self.closed()
+        flow.begin_review(self.control, self.state, self.task)
+        helper = self.task / 'process_tree.py'
+        original = helper.read_bytes()
+        helper.write_bytes(original + b'\n# changed helper\n')
+        with self.assertRaisesRegex(ValueError, '变化'):
+            flow.finish_review(self.control, self.state, self.task, 'accepted', 'outer', ['checked'])
+        helper.write_bytes(original)
+        flow.finish_review(self.control, self.state, self.task, 'accepted', 'outer', ['checked'])
+        runtime = self.root / 'other-keel'
+        runtime.mkdir()
+        for path in SRC.glob('*.py'):
+            shutil.copy2(path, runtime / path.name)
+        with patch.object(handoff, '__file__', str(runtime / 'handoff.py')):
+            self.assertEqual(flow.status(self.control, self.state, self.task)['stage'], 'accepted')
+            (runtime / 'process_tree.py').write_text('changed reviewer runtime\n')
+            self.assertEqual(flow.status(self.control, self.state, self.task)['stage'], 'review_outdated')
+
+    def test_no_pi_launch_costs_zero_and_can_retry(self):
+        with patch.dict(os.environ, {'PI_BIN': str(self.root / 'missing-pi')}), \
+                contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(flow.execute(self.control, self.state, self.task, 'reproduce'), 1)
+        self.reload()
+        self.assertEqual(flow.usage(self.control, self.state)['cost_usd'], 0)
+        self.assertLess(flow.usage(self.control, self.state)['remaining_seconds'], 180)
+        self.execute('reproduce')
+        self.assertAlmostEqual(flow.usage(self.control, self.state)['cost_usd'], .1)
+
+    def test_preparation_failure_and_pi_lock_conflict_allow_retry(self):
+        prepare = self.task / 'prepare_tools.py'
+        original = prepare.read_bytes()
+        with patch.dict(os.environ, {'PI_BIN': str(self.fake), 'MAKE_BUG_SKIP_DEPS': '1'}), \
+                contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+            prepare.write_text('raise SystemExit(1)\n')
+            self.assertEqual(flow.execute(self.control, self.state, self.task, 'reproduce'), 1)
+            prepare.write_bytes(original)
+            self.assertEqual(flow.usage(self.control, self.state)['cost_usd'], 0)
+            with (self.task / '.pi-run.lock').open('a') as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                self.assertEqual(flow.execute(self.control, self.state, self.task, 'reproduce'), 1)
+            self.assertEqual(flow.usage(self.control, self.state)['cost_usd'], 0)
+        self.execute('reproduce')
+        self.assertAlmostEqual(flow.usage(self.control, self.state)['cost_usd'], .1)
+
+    def test_launched_pi_without_session_is_unknown(self):
+        self.fake.write_text('#!/usr/bin/env python3\nprint("fake with no session")\n')
+        self.execute('reproduce')
+        self.assertIsNone(flow.usage(self.control, self.state)['cost_usd'])
+        with self.assertRaisesRegex(ValueError, '未知'):
+            flow.execute(self.control, self.state, self.task, 'reproduce')
+
+    def test_old_or_conflicting_launch_record_is_not_zero(self):
+        with patch.dict(os.environ, {'PI_BIN': str(self.root / 'missing-pi')}), \
+                contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+            flow.execute(self.control, self.state, self.task, 'reproduce')
+        path, record = flow.latest_run(self.control, self.state)
+        self.assertEqual(flow.usage(self.control, self.state)['cost_usd'], 0)
+        record.pop('model_launch_attempted')
+        session_stats.save(path, record)
+        self.assertIsNone(flow.usage(self.control, self.state)['cost_usd'])
+        record['model_launch_attempted'] = False
+        session_stats.save(path, record)
+        (path.parent / 'sessions/unexpected.jsonl').write_text('truncated session\n')
+        self.assertIsNone(flow.usage(self.control, self.state)['cost_usd'])
+
+    def test_review_check_respects_scenario_lock(self):
+        self.closed()
+        flow.begin_review(self.control, self.state, self.task)
+        before = set((self.task / 'result/runs').iterdir())
+        with (self.task / '.scenario.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            with self.assertRaisesRegex(ValueError, '已有场景'):
+                flow.review_check(self.control, self.state, self.task)
+        self.assertEqual(before, set((self.task / 'result/runs').iterdir()))
+        self.assertNotIn('checks', self.state['reviews'][-1])
+
+    def test_review_running_blocks_cli_and_releases_lock_afterwards(self):
+        self.closed()
+        flow.begin_review(self.control, self.state, self.task)
+        original = run_scenario.execute
+        def check_competing_cli(*args, **kwargs):
+            result = subprocess.run(['bash', 'run_scenario.sh'], cwd=self.task,
+                                    capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn('已有场景', result.stderr)
+            return original(*args, **kwargs)
+        with patch.object(run_scenario, 'execute', side_effect=check_competing_cli), \
+                contextlib.redirect_stdout(io.StringIO()):
+            value = flow.review_check(self.control, self.state, self.task)
+        self.assertEqual(value['repair']['status'], 'checks_passed')
+        result = subprocess.run(['bash', 'run_scenario.sh'], cwd=self.task,
+                                capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == '__main__':

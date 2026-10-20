@@ -183,7 +183,7 @@ class ScenarioTests(unittest.TestCase):
 
     def test_repeat_continues_after_failed_check_and_stops_on_execution_failure(self):
         statuses = ['completed', 'completed', 'blocked']
-        with patch.object(sys, 'argv', ['run_scenario.py', '--repeat', '3']), patch.object(runner, 'run_once', side_effect=[
+        with patch.object(sys, 'argv', ['run_scenario.py', '--repeat', '3']), patch.object(runner, '_run_once', side_effect=[
             (None, {'execution': {'status': s}}) for s in statuses]) as run:
             self.assertEqual(runner.main(self.task), 2)
             self.assertEqual(run.call_count, 3)
@@ -191,7 +191,7 @@ class ScenarioTests(unittest.TestCase):
     def test_repeat_shares_one_command_budget(self):
         with patch.object(sys, 'argv', ['run_scenario.py', '--repeat', '3', '--timeout', '300']), \
                 patch.object(runner.time, 'monotonic', side_effect=[100, 100, 220, 350]), \
-                patch.object(runner, 'run_once', return_value=(None, {'execution': {'status': 'completed'}})) as run:
+                patch.object(runner, '_run_once', return_value=(None, {'execution': {'status': 'completed'}})) as run:
             self.assertEqual(runner.main(self.task), 0)
             self.assertEqual([call.args[1] for call in run.call_args_list], [300, 180, 50])
 
@@ -238,7 +238,7 @@ class ScenarioTests(unittest.TestCase):
     def test_lock_prevents_second_run(self):
         with (self.task / '.scenario.lock').open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            with patch.object(sys, 'argv', ['run_scenario.py']), patch.object(runner, 'run_once') as run, contextlib.redirect_stderr(io.StringIO()):
+            with patch.object(sys, 'argv', ['run_scenario.py']), patch.object(runner, '_run_once') as run, contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(runner.main(self.task), 2)
                 run.assert_not_called()
 

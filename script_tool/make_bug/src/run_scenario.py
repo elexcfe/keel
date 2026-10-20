@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """运行场景并保存行为证据；不建立失败基线，不代替人或 AI 评审。"""
 import argparse
+from contextlib import contextmanager
 from datetime import datetime, timezone
 import fcntl
 import json
@@ -21,6 +22,10 @@ import prepare_tools
 
 # 在父 bash/报告收尾边界前结束测试，留时间回收进程并写出记录。
 FINALIZE_SECONDS = 30
+
+# 正式重跑入口及其本地 Python 依赖；交付审核必须绑定实际执行内容。
+RUNTIME_FILES = ('run_scenario.py', 'repair.py', 'evidence.py', 'process_tree.py',
+                 'prepare_tools.py', 'dependency_inventory.py')
 
 LAUNCHER = '''#!/usr/bin/env bash
 set -euo pipefail
@@ -46,7 +51,28 @@ def execute(task, script, env, log, timeout):
             evidence.save(log.with_suffix('.cleanup.json'), scope.stop(process))
 
 
+class ScenarioBusy(ValueError):
+    pass
+
+
+@contextmanager
+def locked(task):
+    with (task / '.scenario.lock').open('a') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise ScenarioBusy('同一任务已有场景运行，请等待完成。') from exc
+        yield
+
+
 def run_once(task, timeout=300, reference=None):
+    """所有单轮调用（包括外层独立验收）共用场景锁。"""
+    with locked(task):
+        return _run_once(task, timeout, reference)
+
+
+def _run_once(task, timeout=300, reference=None):
+    """调用方必须持有场景锁；CLI 的多轮执行全程持锁。"""
     deadline = time.monotonic() + timeout
     if os.environ.get('MAKE_BUG_DEADLINE_MS'):
         remaining = (float(os.environ['MAKE_BUG_DEADLINE_MS']) - float(os.environ.get('MAKE_BUG_WRAP_UP_MS', '0'))) / 1000 - time.time()
@@ -177,21 +203,20 @@ def main(task=None):
         raise KeyboardInterrupt()
     signal.signal(signal.SIGTERM, interrupted)
     task = (task or Path(__file__).resolve().parent).resolve()
-    with (task / '.scenario.lock').open('a') as lock:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            print('同一任务已有场景运行，请等待完成。', file=sys.stderr)
-            return 2
-        deadline = time.monotonic() + args.timeout
-        for _ in range(args.repeat):
-            remaining = max(0, deadline - time.monotonic())
-            _, record = run_once(task, remaining, reference=reference) if reference else run_once(task, remaining)
-            status = record['execution']['status']
-            if status != 'completed':
-                return {'blocked': 2, 'error': 1, 'interrupted': 130}[status]
-            if reference and record['repair']['status'] != 'checks_passed':
-                return 3 if record['repair']['status'] == 'checks_failed' else 4
+    try:
+        with locked(task):
+            deadline = time.monotonic() + args.timeout
+            for _ in range(args.repeat):
+                remaining = max(0, deadline - time.monotonic())
+                _, record = _run_once(task, remaining, reference=reference) if reference else _run_once(task, remaining)
+                status = record['execution']['status']
+                if status != 'completed':
+                    return {'blocked': 2, 'error': 1, 'interrupted': 130}[status]
+                if reference and record['repair']['status'] != 'checks_passed':
+                    return 3 if record['repair']['status'] == 'checks_failed' else 4
+    except ScenarioBusy as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     return 0
 
 

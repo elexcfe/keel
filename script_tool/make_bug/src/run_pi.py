@@ -192,7 +192,8 @@ def run(args, pi_args):
              'source_task': str(source), 'isolation': 'directory-copy' if args.isolate else 'existing-task',
              'started_at': datetime.now(timezone.utc).isoformat(), 'status': 'running', 'phases': [],
              'timeout_seconds': args.timeout, 'cost_limit': args.cost_limit,
-             'review': 'pending', 'warnings': [], 'pi_args': pi_args}
+             'review': 'pending', 'warnings': [], 'pi_args': pi_args,
+             'model_launch_attempted': False}
     save(run_dir / 'run.json', state)
     save(run_dir / 'review.json', {'outcome': 'pending', 'reviewer': None, 'evidence': []})
     print(f'Pi 运行记录：{run_dir}', file=sys.stderr, flush=True)
@@ -316,6 +317,9 @@ def run(args, pi_args):
             env['MAKE_BUG_DEADLINE_MS'] = str((time.time() + remaining) * 1000)
             env['MAKE_BUG_WRAP_UP_MS'] = str(reserve * 1000)
             state['wrap_up_seconds'] = reserve
+            # 在可能启动模型前持久保存；中断或启动异常不能误判成未调用。
+            state['model_launch_attempted'] = True
+            save(run_dir / 'run.json', state)
             phase = execute(command, task=task, env=env, run=run_dir, label=stage,
                             deadline=stage_deadline,
                             cost_limit=args.cost_limit, interactive=interactive)

@@ -98,10 +98,23 @@ def usage(control, state):
             seconds += elapsed
         root = control / attempt['runs_path']
         current = [p / 'sessions' for p in root.iterdir() if p.is_dir()]
+        # 只凭新运行器的显式记录确认未启动。旧记录、损坏记录及已启动但
+        # 缺会话的情况仍为未知；不能把“没有日志”直接当作零费用。
+        if len(current) == 1 and 'ended_at' in attempt:
+            try:
+                run = read(local(control, str((current[0].parent / 'run.json').relative_to(control))))
+                unstarted = (run.get('model_launch_attempted') is False
+                             and run.get('ended_at') and run.get('status') in
+                             ('error', 'failed', 'timeout', 'interrupted')
+                             and not any(current[0].rglob('*.jsonl')))
+                if unstarted:
+                    continue
+            except (OSError, ValueError, TypeError, AttributeError):
+                pass
         if session_stats.analyze(control, folders=current)['totals']['cost'] is None:
             unknown_cost = True
         folders.extend(current)
-    metrics = session_stats.analyze(control, folders=folders) if values else None
+    metrics = session_stats.analyze(control, folders=folders) if folders else None
     cost = metrics['totals']['cost'] if metrics else 0.0
     if unknown_cost:
         cost = None
