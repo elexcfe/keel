@@ -1,0 +1,87 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Keel synthetic recording experiment — not Pi evidence</title>
+<style>
+  body { margin: 0; background: #101827; color: #e2e8f0; font: 18px sans-serif; }
+  h1 { position: absolute; left: 180px; top: 10px; font-size: 20px; }
+  #stage { position: absolute; left: 16px; top: 100px; }
+  #label { position: absolute; left: 180px; top: 92px; }
+  #panel { position: absolute; left: 80px; top: 160px; width: 400px; height: 180px; background: rgb(180,48,64); }
+  #chart { width: 400px; height: 180px; background: rgb(32,200,120); }
+  #sidebar { position: absolute; left: 530px; top: 160px; width: 200px; height: 180px; overflow: auto; background: #334155; }
+  #sidebar div { height: 800px; padding: 10px; }
+  #go { position: absolute; left: 80px; top: 390px; padding: 14px; }
+  #note { position: absolute; left: 80px; top: 460px; font-size: 16px; }
+</style>
+<h1>Keel synthetic timing experiment</h1>
+<canvas id="stage" width="128" height="16"></canvas>
+<div id="label">READY</div>
+<div id="panel"><div id="chart"></div></div>
+<div id="sidebar"><div>Scroll baseline<br>synthetic content</div></div>
+<button id="go">Run next operation</button>
+<div id="note">Green: chart mounted. Red: chart removed.<br>All data is synthetic; no Pi task is modified.</div>
+<script>
+  // This application's event log is independent of the marker sampler.
+  const app = window.app = { events: [], trial: 0, done: 0, workload: 'normal' };
+  const chart = document.querySelector('#chart');
+  const panel = document.querySelector('#panel');
+  const sidebar = document.querySelector('#sidebar');
+  const stage = document.querySelector('#stage').getContext('2d');
+  function log(type, extra = {}) {
+    app.events.push({ type, trial: app.trial, pageMs: performance.now(), ...extra });
+  }
+  function setStage(id) {
+    // An operation indicator shared by all arms; updates only on an action.
+    // 8-bit ID + inverted copy. It is not a clock or a per-frame marker.
+    for (let bit = 0; bit < 16; bit++) {
+      const value = bit < 8 ? id : (id ^ 255);
+      stage.fillStyle = (value >> (7 - bit % 8)) & 1 ? '#fff' : '#000';
+      stage.fillRect(bit * 8, 0, 8, 16);
+    }
+  }
+  setStage(0);
+  function burn(ms) {
+    const end = performance.now() + ms;
+    while (performance.now() < end) { /* deterministic kind of CPU work, measured duration */ }
+  }
+  app.startWorkload = name => {
+    app.workload = name;
+    if (name === 'busy') app.loadTimer = setInterval(() => burn(8), 25);
+  };
+  app.stop = () => clearInterval(app.loadTimer);
+  app.prepare = spec => { app.next = spec; sidebar.scrollTop = 80; };
+  document.querySelector('#go').addEventListener('click', () => {
+    const spec = app.next;
+    app.trial = spec.id;
+    setStage(spec.id);
+    document.querySelector('#label').textContent = `${spec.id}: ${spec.kind}`;
+    log('input', { kind: spec.kind, requestedMs: spec.durationMs });
+    let removed = false;
+    function hide() {
+      chart.remove();
+      sidebar.scrollTop = 0;
+      removed = true;
+      log('removed');
+    }
+    function restore() {
+      if (removed) {
+        panel.append(chart);
+        log('restored');
+      }
+      app.done = spec.id;
+      log('done', { removed });
+    }
+    if (spec.kind === 'healthy') {
+      setTimeout(restore, 50);
+    } else if (spec.kind === 'race') {
+      // A loading render competes with a 12 ms response. Whether a frame is
+      // rendered before the response depends on scheduling, not marker data.
+      let pending = true;
+      setTimeout(() => { pending = false; restore(); }, 12);
+      requestAnimationFrame(() => { if (pending) hide(); });
+    } else {
+      hide();
+      setTimeout(restore, spec.durationMs);
+    }
+  });
+</script>
