@@ -33,7 +33,7 @@ Keel 的目标是加快人与 AI 的协作效率，减少反复解释、等待�
 - [最小修复闭环](../plans/repair-loop.md)：Issue #9 的同会话修复边界、离线验收与单次 Actual 验证记录；共享预算继续后，两条 Actual 路径在外层反馈下完成修复验收；首次交付与报告效率仍有缺口。
 - [统一任务入口](../plans/task-lifecycle.md)：Issue #11 的跨阶段关联、预算与审核衔接实现及离线验收。
 - [统一交付入口](../plans/task-handoff.md)：Issue #12 的环境恢复、复现演示和修复说明关联实现及离线验收；视频导航增强留在 Issue #13。
-- [画面编号最小实验](../plans/video-marker-experiment.md)：Issue #13 的 Chromium / FFmpeg 对照实验，验证编号对应和对复现的干扰；不是正式视频功能。
+- [画面编号实验结论](../plans/video-marker-experiment.md)：路线已终止，实验代码和独立依赖已清理；保留数据、结论和证据出处，不继续扩展。
 - [Pi 接入方案调整](../plans/pi-integration-docs.md)：Issue #3 的文档修改步骤和检查方法。
 
 新增、改名、移动或删除资料时，更新这里的链接和说明。文档有了替代版本，也在这里说明，避免继续按旧方案开发。
