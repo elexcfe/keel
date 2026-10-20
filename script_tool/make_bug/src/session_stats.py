@@ -14,13 +14,14 @@ def number(value):
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value >= 0
 
 
-def analyze(folder):
+def analyze(folder, *, folders=None):
     warnings, records, tools, models = [], [], {}, set()
     seen, sessions, entries = {}, set(), []
-    files = sorted(Path(folder).rglob('*.jsonl'))
+    roots = [Path(p).resolve() for p in folders] if folders is not None else [Path(folder).resolve()]
+    files = sorted({p for root in roots for p in root.rglob('*.jsonl')})
     for file in files:
         sid = None
-        if file.is_symlink() or not file.resolve().is_relative_to(Path(folder).resolve()):
+        if file.is_symlink() or not any(file.resolve().is_relative_to(root) for root in roots):
             warnings.append(f'{file.name}: 不读取会话目录外链接')
             continue
         try:

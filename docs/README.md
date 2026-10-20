@@ -16,7 +16,7 @@ Keel 的目标是加快人与 AI 的协作效率，减少反复解释、等待�
 | 用哪些真实 bug 验证能力 | [靶场清单](keel-target-bugs.md) | 使用前核对版本、环境和命令；早期工具与计时步骤以 Pi 接入、评测方案为准 |
 | 怎样运行已有场景、新建或迁移复现任务 | [make_bug 使用说明](../script_tool/make_bug/README.md) | 先看“产出与验收分工”和“快速运行”；人工 Actual 场景的本地诊断路径及来源登记见“人工诊断材料”，不作为 Pi 交付示例 |
 | 怎样启动已验收任务的修复 | [同会话修复使用说明](../script_tool/make_bug/README.md#同一会话修复闭环)、[修复提示](../script_tool/make_bug/resource/prompts/repair.md) | Pi 同会话修改、检查、纠错和报告；参考准入与最终验收由外层负责 |
-| 接下来怎样把已有能力接成整体流程 | [任务入口计划](../plans/task-lifecycle.md)、[交付入口计划](../plans/task-handoff.md) | Issue #11/#12 是近期主线方案，尚未实现；复用已有执行器，基础演示进入交付，视频加工后置 |
+| 接下来怎样把已有能力接成整体流程 | [任务入口计划](../plans/task-lifecycle.md)、[交付入口计划](../plans/task-handoff.md) | Issue #11/#12 已有最小 CLI 与 Markdown 入口；共用引用约定见 make_bug 使用说明，真实效果待验证，视频加工后置 |
 | 怎样修改 pi 的 Bug 复现要求 | [复现提示词模板](../script_tool/make_bug/resource/prompts/reproduce.md) | 修改后影响新生成的 TASK.md；已有任务可单独编辑自己的 TASK.md |
 | pi 怎样自主补齐依赖、选择缓存并恢复环境 | [环境恢复要求](../script_tool/make_bug/resource/prompts/environment.md) | 与任务要求一起传入 pi，按用途查看 dependencies.json，优先检查验证依赖和服务，补装后分类登记；区分环境失败和目标 Bug |
 | 怎样交付可重跑场景与行为证据 | [场景交付要求](../script_tool/make_bug/resource/prompts/scenario.md) | Pi 产出具体场景与报告，外层独立验收；记录代码快照及原始材料 |
@@ -31,8 +31,8 @@ Keel 的目标是加快人与 AI 的协作效率，减少反复解释、等待�
 - [统一依赖清单](../plans/dependency-inventory.md)：Issue #5 的清单格式、接入与验证。
 - [场景运行与证据交付](../plans/scenario-evidence.md)：Issue #4 的替换步骤、检查方法与实际验收。
 - [最小修复闭环](../plans/repair-loop.md)：Issue #9 的同会话修复边界、离线验收与单次 Actual 验证记录；共享预算继续后，两条 Actual 路径在外层反馈下完成修复验收；首次交付与报告效率仍有缺口。
-- [统一任务入口](../plans/task-lifecycle.md)：Issue #11 的跨阶段关联、预算与审核衔接方案，待实施。
-- [统一交付入口](../plans/task-handoff.md)：Issue #12 的环境恢复、复现演示和修复说明关联方案，待实施；视频导航增强留在 Issue #13。
+- [统一任务入口](../plans/task-lifecycle.md)：Issue #11 的跨阶段关联、预算与审核衔接实现及离线验收。
+- [统一交付入口](../plans/task-handoff.md)：Issue #12 的环境恢复、复现演示和修复说明关联实现及离线验收；视频导航增强留在 Issue #13。
 - [Pi 接入方案调整](../plans/pi-integration-docs.md)：Issue #3 的文档修改步骤和检查方法。
 
 新增、改名、移动或删除资料时，更新这里的链接和说明。文档有了替代版本，也在这里说明，避免继续按旧方案开发。

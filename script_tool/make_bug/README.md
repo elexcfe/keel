@@ -569,3 +569,74 @@ python3 video_evidence.py result/runs/<run_id>/videos/example.webm --at 1.2 1.5 
 2026-10-19 的 Actual 场景、固定账本及观察逻辑由开发 Keel 的 Codex 人工修订，不是 Pi 独立产出。它们已移出正式资源，仅保留在被忽略的 `output/diagnostics/manual-actual-8351-20261019/scenario/`；同目录 `PROVENANCE.json` 记录文件摘要、人工介入和关联任务路径。原任务与独立副本内的人工场景、报告及运行证据也仅作诊断保留，不改写原始材料，不计入 Pi 成功率，不回填历史 A/B 成功。
 
 这些运行只能说明人工场景可以捕捉异常、公共执行器可以保存材料，不能证明 Pi 的场景生成或证据交付能力已提升。后续应改进通用要求与验收，再由 Pi 在干净任务中重新产出；本轮不启动新的付费实验。
+
+## 统一任务与 Markdown 交付入口
+
+`src/task_flow.py` 是仓库侧的外层入口，关联已有 make_bug 任务，不复制执行器。新任务仍先用 make_bug 创建；旧任务的通用运行器/提示词应先按升级说明更新，再明确本次授权范围。入口不会自动升级任务，也不会补写 Pi 的场景或报告。
+
+最小调用链：`task_flow reproduce → run_pi.run → 同一 Pi 会话/场景执行器`；外层 `admit → repair.admit` 固定参考；`task_flow repair → run_pi.run(purpose=repair) → Pi 修改/检查/纠错/报告 → repair.finalize`；然后 `handoff → Markdown`，外层 `begin-review/review` 记录独立结论。Pi 退出或自动检查通过都不能自动获得 accepted。
+
+在本仓库根目录调用（以下预算只是参数示例，必须使用当前任务已获授权的数值；reproduce/repair 会调用 Pi，查看状态和生成入口不会）：
+
+```bash
+python3 script_tool/make_bug/src/task_flow.py --control /path/to/bundle/control init \
+  --task /path/to/bundle/task --execution-seconds 3600 --cost-usd 1 --review-seconds 900
+python3 script_tool/make_bug/src/task_flow.py --control /path/to/bundle/control status
+# 只有明确授权运行时才执行：
+python3 script_tool/make_bug/src/task_flow.py --control /path/to/bundle/control reproduce
+# 外层审阅实际复现之后，填写真实编号与依据：
+python3 script_tool/make_bug/src/task_flow.py --control /path/to/bundle/control admit \
+  --run run-实际编号 --reviewer 外层验收者 --evidence '实际审阅依据'
+python3 script_tool/make_bug/src/task_flow.py --control /path/to/bundle/control repair
+python3 script_tool/make_bug/src/task_flow.py --control /path/to/bundle/control handoff
+python3 script_tool/make_bug/src/task_flow.py --control /path/to/bundle/control begin-review
+# 独立重跑同一场景，单轮最多 300 秒且不得超过独立验收余额：
+python3 script_tool/make_bug/src/task_flow.py --control /path/to/bundle/control review-check
+# 完成独立核对后显式记录；也可用 rejected 或 blocked 并写明反馈：
+python3 script_tool/make_bug/src/task_flow.py --control /path/to/bundle/control review \
+  --outcome accepted --reviewer 外层验收者 --evidence '实际核对的画面、检查与差异'
+# 更新 Markdown 中的验收与预算显示：
+python3 script_tool/make_bug/src/task_flow.py --control /path/to/bundle/control handoff
+```
+
+### 共用引用约定（schema 1）
+
+- 控制目录必须在 Pi 任务外。`task.json` 保存稳定 `task_id`、相对 `task_path`、授权预算、执行记录路径、准入路径和明确审核决定；任务内 `.keel-task.json` 仅保存 Keel 身份，不是 Pi 报告。一个任务不能重新 init 来清空余额。
+- `attempts/<id>/attempt.json` 保存入口启动/结束计时和对应 `runs/`。其中仍是既有 run_pi 的 run.json、sessions/、delivery.json、repair-result.json；不另抄一套成功状态。阶段以原记录实时推导。
+- `admission.json` 复用既有外层准入格式，绑定参考 run ID 与材料摘要；最终候选从最新修复执行的 repair-result.json 读取。场景、原问题、当前代码、原始证据或报告引用不一致会列为缺项。准入不覆盖历史，改变场景需要明确的新任务与授权。
+- `reviews` 保存外层审核者、依据、开始/结束时间和材料指纹。接受之后再改代码/材料或出现未关联的新正式运行，状态变为 review_outdated，不继承旧结论。依赖盘点的 updated_at 和准备记录的 recorded_at 仅是刷新时间，不参与材料指纹；实际依赖、版本、状态和准备结果仍绑定。审核是职责约定，不是对同一操作系统账号的安全隔离。
+- 相对路径分别以控制目录、Pi 任务目录、对应场景运行目录为基准，禁止混用。控制目录与任务目录保持相对关系一起移动；历史记录中的绝对路径保留原样供审计，定位通过相对引用完成。外部依赖缓存与服务不随目录自动迁移，必须按 Pi 环境说明重新核对。
+
+### Pi 交付引用
+
+Pi 在 `result/HANDOFF.json` 组织自己已产出的材料，不让 Keel 代写。结构示例仅说明字段，不是可用于真实验收的产物：
+
+```json
+{
+  "schema": 1,
+  "environment": {
+    "guide": "result/environment.md",
+    "prepare": "Pi 提供的实际准备命令",
+    "check": "Pi 提供的实际就绪检查命令",
+    "reset": "Pi 提供的实际隔离数据恢复命令"
+  },
+  "demos": [
+    {"run_id": "run-参考编号", "guide": "result/REPRO.md", "artifacts": ["videos/before.webm"]},
+    {"run_id": "run-最终编号", "guide": "result/FIX.md", "artifacts": ["videos/after.webm"]}
+  ]
+}
+```
+
+环境说明需覆盖版本来源、服务启动与停止、数据恢复、就绪证明和未知条件；命令工作目录为任务目录，不依赖旧绝对路径。无持久数据时也由 Pi 说明并提供合理的无操作命令。导览说明关键准备、动作、预期与观察。视频、截图或日志按 Bug 类型选择；证据必须已列入对应轮次原始记录。瞬间异常可视频为主，未校准时间不冒充精确时间。
+
+`handoff` 只写控制目录的 HANDOFF.md 和 CHANGES.diff。前者链接问题、依赖、环境命令、场景入口、Pi 报告、前后观察和审核；后者只比较两份已归档源码，不解压或运行归档，大于 1 MiB 或二进制文件只列摘要。缺项明确展示；命令原样显示且不自动执行，结构完整不等于环境恢复已验证或人已理解。
+
+### 预算、失败与中断
+
+复现和修复共用初始化的执行时间与费用，传给既有 run_pi 的是余额；保留 bash 600 秒和正式场景 300 秒规则，不加默认 120 秒外层截断。执行用时含准备、执行和收尾，不含两个命令之间的人工等待。跨阶段会话按 session/entry ID 去重；同 ID 内容冲突、某段缺用量或日志损坏时费用未知，不能当零启动下一次调用。费用仍是会话回报的估算软上限，存在回报延迟，并非服务端账单硬限额。
+
+独立验收从 begin-review 到 review 单独按墙钟计时，包含这期间人工停顿；重复开始不重置。超过余额只能登记 timed_out，不能 accepted。review-check 复用场景运行器，在剩余预算内独立重跑并保存记录；这些外层运行不要求 Pi 再更新报告，最后一轮必须通过且匹配候选源码。其他外部审核程序不会被入口强杀。可对不完整交付记录 blocked/rejected，反馈留在审核决定里。
+
+正常中断由既有运行器清理并留存记录。进程被强杀导致入口未收尾时，status 显示 running_or_interrupted；先核对进程，确认底层锁已释放后显式执行 `reconcile`，保守扣除该次预留时间，费用仍取原会话。不要删除记录来重置预算。没有自动续接、自动付费重试或自动扩预算；源码已偏离参考时，也不会用新修复会话冒充原会话继续。
+
+账本只覆盖通过本控制目录启动的调用。关联任务前的历史费用和绕过入口的直接调用不自动纳入，初始化必须对应明确授权的新执行范围，不能宣称是历史累计账单。既有 Actual 任务本轮没有升级或运行。
