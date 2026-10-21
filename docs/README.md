@@ -29,6 +29,7 @@ Keel 的目标是加快人与 AI 的协作效率，减少反复解释、等待�
 - [产品说明与项目计划重写](../plans/docs-rewrite.md)：文档恢复记录，以及 Issue #8 的定位与分阶段评测调整。
 - [复现评审回放原型](../plans/reproduction-review-replay.md)：输入隔离、离线入口、材料缺口和后续模型验收条件。
 - [复现评审材料盘点](../plans/reproduction-review-inventory.json)：本机候选材料的来源、Issue 分组、运行与证据摘要；不作为模型输入或独立标签。
+- [复现评审开发材料与参考标注](../script_tool/make_bug/review_data/README.md)：5 个同 Issue 开发切片、逐项可评范围、来源/排除清单和隔离标注；尚无完整正例或可用留出集。
 - [Bug 复现工作流实施计划](../plans/make-bug.md)：Issue #2 的实现步骤与检查方法。
 - [Pi 运行监测](../plans/pi-run-monitoring.md)：Issue #7 的实现与验证。
 - [统一依赖清单](../plans/dependency-inventory.md)：Issue #5 的清单格式、接入与验证。

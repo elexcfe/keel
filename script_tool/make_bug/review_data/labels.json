@@ -1,0 +1,270 @@
+{
+  "schema": 1,
+  "dataset_version": "review-dev-v1",
+  "catalog_sha256": "6ecf5a40bccdeb7521341d93bd4312228d8b3b2fdab721761b4a9b9f7123baed",
+  "frozen_at": "2026-10-21T08:39:06.134837+00:00",
+  "annotation_provenance": {
+    "author": "current Codex development assistant",
+    "model_version": "not recorded",
+    "method": "Read frozen original tests, declarations, logs and existing report; authored reference labels separately from future reviewer inputs. No additional model API called.",
+    "independence": "independent of Pi artifact authorship and future workflow reviewer; same assistant implemented the offline harness and knows earlier discussion, not blinded",
+    "human_review": "not performed",
+    "status": "frozen AI-authored reference annotations, provisional pending human review",
+    "prior_outer_verdicts": "not used as label authority; findings below cite request-visible primary material",
+    "disagreement_policy": "Preserve ambiguous dimensions as unknown; revise labels only as a new version, never silently change after viewing reviewer answers"
+  },
+  "scoring_policy": {
+    "unit": "one original Issue; 5 correlated development slices, not 5 independent Bugs",
+    "scope": "Score cited findings on text dimensions separately from overall reproduction admission. Missing media/report cannot be counted as successful complete review.",
+    "should_return": "Must identify the registered, request-visible defect with a matching citation. Merely refusing because of generic missing material does not earn semantic-detection credit.",
+    "insufficient_evidence": "Prefer undetermined; suggest_return is acceptable if it explicitly requests the missing evidence without inventing a defect. Never suggest_pass.",
+    "positive_dimension": "Exact-value assertion in case-103 is adequate for this narrow dimension. Do not mark it insufficient merely because earlier cases were wrong. This is not a whole-case pass.",
+    "cannot_measure": [
+      "wrong-rejection rate on fully valid reproductions (zero such cases)",
+      "generalization to unseen Issues (zero ready holdout Issues)",
+      "visual-video correctness (text-only input)",
+      "human time saved or model accuracy (no model replay or human timing)"
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "case-101",
+      "run_id": "run-20261019T163238-tomfm3f0",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "request_sha256": "b1e3296d7a2ea2beec3661b278dd1019953c0f13998066d832258fa2b89af0b2",
+      "annotation_status": "provisional_ai_reference",
+      "findings": [
+        {
+          "id": "F101",
+          "dimension": "assertion_strength",
+          "judgment": "insufficient",
+          "claim": "场景对 swr-edit-applied 声明 8,400.00→5,600.00；实现只比较 statsChanged && chartChanged。错误数值只要变化也可能满足该条件，不能证明声明的固定数值预期。",
+          "citations": [
+            {
+              "material_id": "m6",
+              "start_line": 24,
+              "end_line": 24,
+              "quote": "    \"自动断言（regression）：swr-edit-applied（统计文本 Target Life Savings 8,400.00→5,600.00 且折线路径变化）、category-uncheck-applied（Food 由勾选变为未勾选且图表重新出现）\","
+            },
+            {
+              "material_id": "m2",
+              "start_line": 291,
+              "end_line": 291,
+              "quote": "    const statsChanged = JSON.stringify(before.stats) !== JSON.stringify(after.stats);"
+            },
+            {
+              "material_id": "m2",
+              "start_line": 329,
+              "end_line": 333,
+              "quote": "    rec.record(\n      'swr-edit-applied',\n      statsChanged && chartChanged,\n      { statsBefore: before.stats, statsAfter: after.stats, chartChanged },\n    );"
+            }
+          ],
+          "confidence": "high_for_cited_text_only"
+        }
+      ],
+      "cannot_conclude": [
+        "No video/image-content verdict; binaries have not been reviewed by this text interface.",
+        "No independent rerun performed; findings describe frozen files only.",
+        "Missing this-run historical REPRO: no report-timing, report-round-count or narrative-accuracy label.",
+        "This does not deny that target UI symptoms occurred; it concerns regression-assertion strength."
+      ],
+      "disputes": [],
+      "reference_class": "should_return",
+      "preferred_decision": "suggest_return",
+      "allowed_decisions": [
+        "suggest_return"
+      ]
+    },
+    {
+      "case_id": "case-102",
+      "run_id": "run-20261019T162700-3l3v7evi",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "request_sha256": "c7818e81d55ab7ac8f3af70661978e10e35411d0f27ae92e33692548d1b174e8",
+      "annotation_status": "provisional_ai_reference",
+      "findings": [
+        {
+          "id": "F102",
+          "dimension": "record_consistency",
+          "judgment": "inconsistent",
+          "claim": "record 将六项写为 inconclusive 并解释为没有 ASSERT 标注，但本轮原始 reporter 已包含 ASSERT 标注；采集器读取 spec.annotations。不能把结构化“未执行”当成所有目标断言都没跑过的事实。需纠正采集/记录并重新核对，不能直接放行。",
+          "citations": [
+            {
+              "material_id": "run",
+              "start_line": 37,
+              "end_line": 46,
+              "quote": "      \"id\": \"swr-page-stays-mounted\",\n      \"name\": \"编辑 Safe withdrawal rate 期间侧栏与图表始终留在页面中\",\n      \"status\": \"inconclusive\",\n      \"evidence\": [\n        \"logs/repro-evidence.json\",\n        \"logs/playwright.log\"\n      ],\n      \"detail\": \"本轮未执行到该断言（无 ASSERT 标注）\"\n    },\n    {"
+            },
+            {
+              "material_id": "m24",
+              "start_line": 78,
+              "end_line": 82,
+              "quote": "                    {\n                      \"type\": \"ASSERT swr-page-stays-mounted\",\n                      \"description\": \"FAIL\"\n                    },\n                    {"
+            },
+            {
+              "material_id": "m7",
+              "start_line": 172,
+              "end_line": 176,
+              "quote": "                                'status': r.get('status'),\n                                'retry': r.get('retry', 0),\n                                'annotations': spec.get('annotations', []),\n                                'errors': [e.get('message', '')[:4000] for e in r.get('errors', [])]})\n        for s in suite.get('suites', []):"
+            }
+          ],
+          "confidence": "high_for_cited_text_only"
+        }
+      ],
+      "cannot_conclude": [
+        "No video/image-content verdict; binaries have not been reviewed by this text interface.",
+        "No independent rerun performed; findings describe frozen files only.",
+        "Missing historical REPRO; no label for report completeness or claimed repetition counts."
+      ],
+      "disputes": [
+        "不据这份记录给 Bug 未发生或六项断言完全未执行的标签；原始日志与结构化记录必须分别看。"
+      ],
+      "reference_class": "should_return",
+      "preferred_decision": "suggest_return",
+      "allowed_decisions": [
+        "suggest_return"
+      ]
+    },
+    {
+      "case_id": "case-103",
+      "run_id": "run-20261019T171249-7t9rgtt1",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "request_sha256": "771c8e610025cc3b0c12469930718f986c2f3b72380b757429f43086f6c4c2ee",
+      "annotation_status": "provisional_ai_reference",
+      "findings": [
+        {
+          "id": "F103",
+          "dimension": "assertion_strength",
+          "judgment": "adequate_for_fixed_values",
+          "claim": "本轮明确检查 8,400.00 与 5,600.00 两条固定文本，且把两项与 chartChanged 共同用于 swr-edit-applied；不能沿用前轮“只检查变化”的批评。此结论仅限该数值回归条件。",
+          "citations": [
+            {
+              "material_id": "m2",
+              "start_line": 292,
+              "end_line": 300,
+              "quote": "    // 固定预期：SWR 4 → 6 后 Target Life Savings 由 8,400.00 变为 5,600.00\n    const LIFE_SAVINGS_BEFORE = 'Target Life Savings: 8,400.00';\n    const LIFE_SAVINGS_AFTER = 'Target Life Savings: 5,600.00';\n    const hasStat = (list, text) => Array.isArray(list) && list.includes(text);\n    const lifeSavingsBeforeOk = hasStat(before.stats, LIFE_SAVINGS_BEFORE);\n    const lifeSavingsAfterOk = hasStat(after.stats, LIFE_SAVINGS_AFTER);\n    const swrEditApplied =\n      lifeSavingsBeforeOk && lifeSavingsAfterOk && chartChanged;\n"
+            },
+            {
+              "material_id": "m2",
+              "start_line": 358,
+              "end_line": 364,
+              "quote": "    expect\n      .soft(before.stats, 'swr-edit-applied life savings before')\n      .toContain('Target Life Savings: 8,400.00');\n    expect\n      .soft(after.stats, 'swr-edit-applied life savings after')\n      .toContain('Target Life Savings: 5,600.00');\n    expect"
+            },
+            {
+              "material_id": "m20",
+              "start_line": 56,
+              "end_line": 58,
+              "quote": "  \"lifeSavingsBeforeOk\": true,\n  \"lifeSavingsAfterOk\": true,\n  \"swrEditApplied\": true,"
+            }
+          ],
+          "confidence": "high_for_cited_text_only"
+        }
+      ],
+      "cannot_conclude": [
+        "No video/image-content verdict; binaries have not been reviewed by this text interface.",
+        "No independent rerun performed; findings describe frozen files only.",
+        "Current REPRO contains previous-review answers and is excluded; no clean historical report in this packet.",
+        "Target failed/regression passed in record does not establish complete visual reproduction admission."
+      ],
+      "disputes": [],
+      "reference_class": "insufficient_evidence",
+      "preferred_decision": "undetermined",
+      "allowed_decisions": [
+        "undetermined",
+        "suggest_return"
+      ]
+    },
+    {
+      "case_id": "case-104",
+      "run_id": "run-20261019T114836-xoop2754",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "request_sha256": "9511dd9a79dbf3fae260bebbf968b5e9a9402ace1630f3e93b9f335f3fd16c0a",
+      "annotation_status": "provisional_ai_reference",
+      "findings": [
+        {
+          "id": "F104",
+          "dimension": "report_traceability",
+          "judgment": "inconsistent",
+          "claim": "报告在本轮“自动检查”下列六项，冻结 record 只有四项，缺少单独的两项分类检查条目。现有原始分类观察不等于这两项已作为独立检查登记；报告必须区分观察与登记检查，不能把六项都当成可逐项追溯的结构化结果。",
+          "citations": [
+            {
+              "material_id": "m32",
+              "start_line": 21,
+              "end_line": 28,
+              "quote": "自动检查（轮次 `run-20261019T114836-xoop2754`，见 `result/runs/run-20261019T114836-xoop2754/observations.json`）：\n\n- `failed` 编辑期间侧栏与图表始终在页面中（无整页 loading 替换）\n- `failed` 编辑完成后侧栏滚动位置保持不变\n- `passed` 编辑确实改变了图表内容（证明参数编辑被处理）\n- `failed` 取消勾选分类时侧栏与图表不离开页面\n- `failed` 取消勾选分类后侧栏滚动位置保持不变\n- `failed` 复现测试用例结果（项目 Playwright，2 个用例均失败）"
+            },
+            {
+              "material_id": "run",
+              "start_line": 4,
+              "end_line": 36,
+              "quote": "  \"checks\": [\n    {\n      \"name\": \"编辑期间侧栏与图表始终在页面中（无整页 loading 替换）\",\n      \"status\": \"failed\",\n      \"evidence\": [\n        \"logs/repro-evidence.json\",\n        \"logs/playwright.log\"\n      ]\n    },\n    {\n      \"name\": \"编辑完成后侧栏滚动位置保持不变\",\n      \"status\": \"failed\",\n      \"evidence\": [\n        \"logs/repro-evidence.json\",\n        \"logs/playwright.log\"\n      ]\n    },\n    {\n      \"name\": \"编辑确实改变了图表内容（证明参数编辑被处理）\",\n      \"status\": \"passed\",\n      \"evidence\": [\n        \"logs/repro-evidence.json\"\n      ]\n    },\n    {\n      \"name\": \"复现测试用例结果（项目 Playwright）\",\n      \"status\": \"failed\",\n      \"evidence\": [\n        \"logs/playwright.log\",\n        \"logs/test-results.json\"\n      ]\n    }\n  ],"
+            }
+          ],
+          "confidence": "high_for_cited_text_only"
+        }
+      ],
+      "cannot_conclude": [
+        "No video/image-content verdict; binaries have not been reviewed by this text interface.",
+        "No independent rerun performed; findings describe frozen files only.",
+        "Report copy explicitly names the run but exact historical write time is not proven.",
+        "Multi-round stability, linked report-level media and root-cause claims are not independently adjudicated here.",
+        "Legacy schema 1 remains incomplete under current admission checks; do not rewrite the old schema."
+      ],
+      "disputes": [
+        "原始分类日志和测试确实存在；不标成“分类现象未发生”或“分类用例不存在”。这里只标报告与结构化记录的可追溯性不一致。"
+      ],
+      "reference_class": "should_return",
+      "preferred_decision": "suggest_return",
+      "allowed_decisions": [
+        "suggest_return"
+      ]
+    },
+    {
+      "case_id": "case-105",
+      "run_id": "run-20261019T093813-on8rt_03",
+      "issue_group": "actualbudget/actual#8351",
+      "split": "development",
+      "request_sha256": "b039a0b1b3d88eef1ecd540f27402a96dfdabae62fd4deb3281ad673e9b44209",
+      "annotation_status": "provisional_ai_reference",
+      "findings": [
+        {
+          "id": "F105",
+          "dimension": "failure_attribution",
+          "judgment": "environment_blocked",
+          "claim": "执行在环境检查阶段被阻塞；浏览器启动日志包含 Operation not permitted。此轮没有目标检查，不能把浏览器退出当成 Crossover 目标 Bug 的失败证据，也不能据此认定 Bug 不存在。",
+          "citations": [
+            {
+              "material_id": "m44",
+              "start_line": 10,
+              "end_line": 10,
+              "quote": "[pid=39][err] [1019/173819.418264:FATAL:content/browser/sandbox_host_linux.cc:41] Check failed: . shutdown: Operation not permitted (1)"
+            },
+            {
+              "material_id": "run",
+              "start_line": 4,
+              "end_line": 5,
+              "quote": "  \"checks\": [],\n  \"execution_status\": \"blocked\""
+            }
+          ],
+          "confidence": "high_for_cited_text_only"
+        }
+      ],
+      "cannot_conclude": [
+        "No video/image-content verdict; binaries have not been reviewed by this text interface.",
+        "No independent rerun performed; findings describe frozen files only.",
+        "Environment failure attribution only; application behavior unobserved by target checks.",
+        "Historical record is from independent-check directory; not counted as a new Pi-autonomous success or independent Issue."
+      ],
+      "disputes": [],
+      "reference_class": "insufficient_evidence",
+      "preferred_decision": "undetermined",
+      "allowed_decisions": [
+        "undetermined",
+        "suggest_return"
+      ]
+    }
+  ]
+}
